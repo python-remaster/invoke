@@ -3,13 +3,16 @@ requires = ["setuptools>=51.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "invoke"
-version = "2.0.0"
+name = "tinker-invoke"
+version = "2.2.1"
 description = "Pythonic task execution"
 # keywords = ["automation", "task runner"]
-authors = [{name="Jeff Forcier", email="jeff@bitprophet.org"}]
-maintainers = [{name="Jeff Forcier", email="jeff@bitprophet.org"}]
-requires-python = ">=3.6.2"
+authors = [
+    {name="Jeff Forcier", email="jeff@bitprophet.org"},
+    {name="Jesse P Johnson", email="jpj6652@gmail.com"}
+]
+maintainers = [{name="Jesse P Johnson", email="jpj6652@gmail.com"}]
+requires-python = ">=3.7.0"
 readme = "README.rst"
 license = {file = "LICENSE"}
 classifiers=[
@@ -24,18 +27,19 @@ classifiers=[
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development",
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Software Distribution",
-    "Topic :: System :: Systems Administration",
+    "Topic :: System :: Systems Administration"
 ]
 
 [project.optional-dependencies]
@@ -44,12 +48,11 @@ dev = [
     "invocations>=3.0.1",
     # Coverage!
     "coverage[toml]>=6.2,<7",
-    "codecov==2.1.12",
+    "codecov>=2.1.12",
     # Docs
     "releases>=2",
     "alabaster==0.7.12",
     # Testing
-    "tox>=3.20.1",
     "pytest>=7",
     "pytest-relaxed>=2",
     "pytest-cov>=4",
@@ -60,10 +63,13 @@ dev = [
     "flake8>=4,<5",
     "isort>=5.10.1",
     "black>=22.8,<22.9",
+    # Typing
+    "mypy",
+    "types-PyYAML==6.0.12.4",
     # Debuggery
     "icecream>=2.1",
     # Publish
-    "twine>=1.15",
+    "twine>=1.15"
 ]
 
 [project.scripts]
@@ -87,17 +93,17 @@ line-length = 79
 include = '\.pyi?$'
 exclude = '''
 (
-  /(
-    | \.eggs
-    | \.git
-    | \.tox
-    | \.pytest_cache
-    | _build
-    | buck-out
-    | build
-    | dist
-    | vendor
-  )
+    /(
+        | \.eggs
+        | \.git
+        | \.pytest_cache
+        | \.venv
+        | _build
+        | buck-out
+        | build
+        | dist
+        | vendor
+    )
 )
 '''
 
