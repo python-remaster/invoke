@@ -8,12 +8,13 @@ from os.path import join, splitext, expanduser
 from types import ModuleType
 from typing import Any, Dict, Iterator, Optional, Tuple, Type, Union
 
+import yaml
+
 from .env import Environment
 from .exceptions import UnknownFileType, UnpicklableConfigMember
 from .runners import Local
 from .terminals import WINDOWS
-from .util import debug, yaml
-
+from .util import debug
 
 try:
     from importlib.machinery import SourceFileLoader

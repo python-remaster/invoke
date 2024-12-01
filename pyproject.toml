@@ -41,6 +41,10 @@ classifiers=[
     "Topic :: System :: Software Distribution",
     "Topic :: System :: Systems Administration"
 ]
+dependencies = [
+    "lexicon",
+    "PyYAML"
+]
 
 [project.optional-dependencies]
 dev = [
