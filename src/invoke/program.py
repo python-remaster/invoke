@@ -18,15 +18,15 @@ from typing import (
 
 from . import Collection, Config, Executor, FilesystemLoader
 from .completion.complete import complete, print_completion_script
-from .parser import Parser, ParserContext, Argument
-from .exceptions import UnexpectedExit, CollectionNotFound, ParseError, Exit
+from .exceptions import CollectionNotFound, Exit, ParseError, UnexpectedExit
+from .parser import Argument, Parser, ParserContext
 from .terminals import pty_size
 from .util import debug, enable_logging, helpline
 
 if TYPE_CHECKING:
+    from lexicon import Lexicon
     from .loader import Loader
     from .parser import ParseResult
-    from .util import Lexicon
 
 
 class Program:

@@ -1,5 +1,6 @@
-import re
 import inspect
+import re
+
 from .backwardscompat import callable
 
 # metaclass implementation idea from

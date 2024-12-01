@@ -11,7 +11,7 @@ not be included in the Sphinx API documentation.
 import os
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Sequence
 
-from .exceptions import UncastableEnvVar, AmbiguousEnvVar
+from .exceptions import AmbiguousEnvVar, UncastableEnvVar
 from .util import debug
 
 if TYPE_CHECKING:

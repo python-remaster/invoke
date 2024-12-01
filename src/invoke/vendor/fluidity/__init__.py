@@ -1,4 +1,9 @@
-from .machine import (StateMachine, state, transition,
-                               InvalidConfiguration, InvalidTransition,
-                               GuardNotSatisfied, ForkedTransition)
-
+from .machine import (
+    ForkedTransition,
+    GuardNotSatisfied,
+    InvalidConfiguration,
+    InvalidTransition,
+    StateMachine,
+    state,
+    transition,
+)

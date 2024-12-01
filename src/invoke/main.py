@@ -4,7 +4,7 @@ Invoke's own 'binary' entrypoint.
 Dogfoods the `program` module.
 """
 
-from . import __version__, Program
+from . import Program, __version__
 
 program = Program(
     name="Invoke",

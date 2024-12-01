@@ -1,14 +1,12 @@
-from collections import namedtuple
-from contextlib import contextmanager
-from types import TracebackType
-from typing import Any, Generator, List, IO, Optional, Tuple, Type, Union
 import io
 import logging
 import os
-import threading
 import sys
-
-from lexicon import Lexicon
+import threading
+from collections import namedtuple
+from contextlib import contextmanager
+from types import TracebackType
+from typing import IO, Any, Generator, List, Optional, Tuple, Type, Union
 
 # NOTE: This is the canonical location for commonly-used vendored modules,
 # which is the only spot that performs this try/except to allow repackaged

@@ -7,15 +7,14 @@ This is its own module to abstract away what would otherwise be distracting
 logic-flow interruptions.
 """
 
-from contextlib import contextmanager
-from typing import Generator, IO, Optional, Tuple
 import os
 import select
 import sys
+from contextlib import contextmanager
+from typing import IO, Generator, Optional, Tuple
 
 # TODO: move in here? They're currently platform-agnostic...
 from .util import has_fileno, isatty
-
 
 WINDOWS = sys.platform == "win32"
 """
@@ -30,14 +29,8 @@ setups (vanilla Python, ActiveState etc) here.
 
 if sys.platform == "win32":
     import msvcrt
-    from ctypes import (
-        Structure,
-        c_ushort,
-        windll,
-        POINTER,
-        byref,
-    )
-    from ctypes.wintypes import HANDLE, _COORD, _SMALL_RECT
+    from ctypes import POINTER, Structure, byref, c_ushort, windll
+    from ctypes.wintypes import _COORD, _SMALL_RECT, HANDLE
 else:
     import fcntl
     import struct

@@ -12,9 +12,9 @@ from typing import (
     Any,
     Callable,
     Dict,
-    List,
     Generic,
     Iterable,
+    List,
     Optional,
     Set,
     Tuple,
@@ -28,6 +28,7 @@ from .parser import Argument, translate_underscores
 
 if TYPE_CHECKING:
     from inspect import Signature
+
     from .config import Config
 
 T = TypeVar("T", bound=Callable)

@@ -2,13 +2,13 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .config import Config
 from .parser import ParserContext
-from .util import debug
 from .tasks import Call, Task
+from .util import debug
 
 if TYPE_CHECKING:
     from .collection import Collection
-    from .runners import Result
     from .parser import ParseResult
+    from .runners import Result
 
 
 class Executor:
