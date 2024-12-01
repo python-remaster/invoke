@@ -642,7 +642,9 @@ Valid real attributes: ['clear', 'clone', 'env_prefix', 'file_prefix', 'from_dat
             c._load_yml = Mock(side_effect=IOError(2, "aw nuts"))
             c.set_runtime_path("is-a.yml")  # Triggers use of _load_yml
             c.load_runtime()
-            mock_debug.assert_any_call("Didn't see any %r, skipping.", "is-a.yml")
+            mock_debug.assert_any_call(
+                "Didn't see any %r, skipping.", "is-a.yml"
+            )
 
         @raises(IOError)
         def non_missing_file_IOErrors_are_raised(self):

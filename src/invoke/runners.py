@@ -69,10 +69,17 @@ class Runner:
     .. versionadded:: 1.0
     """
 
+    encoding: str
+    env: Dict[str, Any]
     opts: Dict[str, Any]
+    result_kwargs: Dict[str, Any]
     using_pty: bool
-    read_chunk_size = 1000
-    input_sleep = 0.01
+    threads: Dict[Callable, ExceptionHandlingThread]
+    stdout: List[str]
+    stderr: List[str]
+    streams: Dict[str, Any]
+    read_chunk_size: int = 1000
+    input_sleep: float = 0.01
 
     def __init__(self, context: "Context") -> None:
         """
@@ -419,14 +426,14 @@ class Runner:
         # TODO: I hate this. Needs a deeper separate think about tweaking
         # Runner.generate_result in a way that isn't literally just this same
         # two-step process, and which also works w/ downstream.
-        self.result_kwargs = dict(
-            command=command,
-            shell=self.opts["shell"],
-            env=self.env,
-            pty=self.using_pty,
-            hide=self.opts["hide"],
-            encoding=self.encoding,
-        )
+        self.result_kwargs = {
+            "command": command,
+            "shell": self.opts["shell"],
+            "env": self.env,
+            "pty": self.using_pty,
+            "hide": self.opts["hide"],
+            "encoding": self.encoding,
+        }
 
     def _run_body(self, command: str, **kwargs: Any) -> Optional["Result"]:
         # Prepare all the bits n bobs.
@@ -544,8 +551,10 @@ class Runner:
         self._asynchronous = opts["asynchronous"]
         self._disowned = opts["disown"]
         if self._asynchronous and self._disowned:
-            err = "Cannot give both 'asynchronous' and 'disown' at the same time!"  # noqa
-            raise ValueError(err)
+            raise ValueError(
+                "Cannot give both 'asynchronous' and 'disown' at the same "
+                + "time!"
+            )
         # If hide was True, turn off echoing
         if opts["hide"] is True:
             opts["echo"] = False
@@ -613,10 +622,10 @@ class Runner:
         # no longer being consumed by the dead thread (and a pipe is filling
         # up.) In that case, the non-dead thread is likely to block forever on
         # a `recv` unless we add this timeout.
-        if target == self.handle_stdin:
+        if target is self.handle_stdin:
             return None
         opposite = self.handle_stderr
-        if target == self.handle_stderr:
+        if target is self.handle_stderr:
             opposite = self.handle_stdout
         if opposite in self.threads and self.threads[opposite].is_dead:
             return 1
@@ -897,6 +906,7 @@ class Runner:
                 # Take a nap so we're not chewing CPU.
                 time.sleep(self.input_sleep)
 
+    # pylint: disable-next=unused-argument
     def should_echo_stdin(self, input_: IO, output: IO) -> bool:
         """
         Determine whether data read from ``input_`` should echo to ``output``.
@@ -955,20 +965,21 @@ class Runner:
         """
         return env if replace_env else dict(os.environ, **env)
 
-    def should_use_pty(self, pty: bool, fallback: bool) -> bool:
+    # pylint: disable-next=unused-argument
+    def should_use_pty(self, use_pty: bool, fallback: bool = False) -> bool:
         """
         Should execution attempt to use a pseudo-terminal?
 
-        :param bool pty:
+        :param bool use_pty:
             Whether the user explicitly asked for a pty.
         :param bool fallback:
             Whether falling back to non-pty execution should be allowed, in
-            situations where ``pty=True`` but a pty could not be allocated.
+            situations where ``use_pty=True`` but a pty could not be allocated.
 
         .. versionadded:: 1.0
         """
         # NOTE: fallback not used: no falling back implemented by default.
-        return pty
+        return use_pty
 
     @property
     def has_dead_threads(self) -> bool:
@@ -1135,6 +1146,7 @@ class Runner:
         # subprocess. For now, good enough to assume both are the same.
         return default_encoding()
 
+    # pylint: disable-next=unused-argument
     def send_interrupt(self, interrupt: "KeyboardInterrupt") -> None:
         """
         Submit an interrupt signal to the running subprocess.
@@ -1221,20 +1233,26 @@ class Local(Runner):
     .. versionadded:: 1.0
     """
 
+    pid: int
+    # parent_fd
+    process: "Popen"
+
     def __init__(self, context: "Context") -> None:
         super().__init__(context)
         # Bookkeeping var for pty use case
         self.status = 0
 
-    def should_use_pty(self, pty: bool = False, fallback: bool = True) -> bool:
-        use_pty = False
-        if pty:
-            use_pty = True
+    def should_use_pty(
+        self, use_pty: bool = False, fallback: bool = True
+    ) -> bool:
+        if use_pty:
             # TODO: pass in & test in_stream, not sys.stdin
             if not has_fileno(sys.stdin) and fallback:
                 if not self.warned_about_pty_fallback:
-                    err = "WARNING: stdin has no fileno; falling back to non-pty execution!\n"  # noqa
-                    sys.stderr.write(err)
+                    sys.stderr.write(
+                        "WARNING: stdin has no fileno; falling back to non-pty"
+                        + " execution!\n"
+                    )
                     self.warned_about_pty_fallback = True
                 use_pty = False
         return use_pty
@@ -1289,8 +1307,8 @@ class Local(Runner):
         # there's nothing we can do about that!)
         try:
             os.write(fd, data)
-        except OSError as e:
-            if "Broken pipe" not in str(e):
+        except OSError as exc:
+            if "Broken pipe" not in str(exc):
                 raise
 
     def close_proc_stdin(self) -> None:
@@ -1298,7 +1316,7 @@ class Local(Runner):
             # there is no working scenario to tell the process that stdin
             # closed when using pty
             raise SubprocessPipeError("Cannot close stdin when pty=True")
-        elif self.process and self.process.stdin:
+        if self.process and self.process.stdin:
             self.process.stdin.close()
         else:
             raise SubprocessPipeError(
@@ -1308,8 +1326,10 @@ class Local(Runner):
     def start(self, command: str, shell: str, env: Dict[str, Any]) -> None:
         if self.using_pty:
             if pty is None:  # Encountered ImportError
-                err = "You indicated pty=True, but your platform doesn't support the 'pty' module!"  # noqa
-                sys.exit(err)
+                sys.exit(
+                    "You indicated pty=True, but your platform doesn't support"
+                    + " the 'pty' module!"
+                )
             cols, rows = pty_size()
             self.pid, self.parent_fd = pty.fork()
             # If we're the child process, load up the actual command in a
@@ -1365,8 +1385,7 @@ class Local(Runner):
             # issue #351 may be totally unsolvable there. Unclear.
             pid_val, self.status = os.waitpid(self.pid, os.WNOHANG)
             return pid_val != 0
-        else:
-            return self.process.poll() is not None
+        return self.process.poll() is not None
 
     def returncode(self) -> Optional[int]:
         if self.using_pty:
@@ -1386,8 +1405,7 @@ class Local(Runner):
                 code = -1 * code
             return code
             # TODO: do we care about WIFSTOPPED? Maybe someday?
-        else:
-            return self.process.returncode
+        return self.process.returncode
 
     def stop(self) -> None:
         super().stop()
@@ -1397,7 +1415,7 @@ class Local(Runner):
         if self.using_pty:
             try:
                 os.close(self.parent_fd)
-            except Exception:
+            except IOError:
                 # If something weird happened preventing the close, there's
                 # nothing to be done about it now...
                 pass
@@ -1508,20 +1526,14 @@ class Result:
 
     def __str__(self) -> str:
         if self.exited is not None:
-            desc = "Command exited with status {}.".format(self.exited)
+            desc = f"Command exited with status {self.exited}."
         else:
             desc = "Command was not fully executed due to watcher error."
         ret = [desc]
         for x in ("stdout", "stderr"):
             val = getattr(self, x)
             ret.append(
-                """=== {} ===
-{}
-""".format(
-                    x, val.rstrip()
-                )
-                if val
-                else "(no {})".format(x)
+                f"=== {x} ===\n{val.rstrip()}\n" if val else f"(no {x})"
             )
         return "\n".join(ret)
 
@@ -1529,8 +1541,7 @@ class Result:
         # TODO: more? e.g. len of stdout/err? (how to represent cleanly in a
         # 'x=y' format like this? e.g. '4b' is ambiguous as to what it
         # represents
-        template = "<Result cmd={!r} exited={}>"
-        return template.format(self.command, self.exited)
+        return f"<Result cmd={self.command!r} exited={self.exited}>"
 
     @property
     def ok(self) -> bool:
@@ -1671,5 +1682,4 @@ def default_encoding() -> str:
     unknown-but-presumably-text bytes, and the user has not specified an
     override.
     """
-    encoding = locale.getpreferredencoding(False)
-    return encoding
+    return locale.getpreferredencoding(False)

@@ -107,8 +107,8 @@ class Task(Generic[T]):
     def __repr__(self) -> str:
         aliases = ""
         if self.aliases:
-            aliases = " ({})".format(", ".join(self.aliases))
-        return "<Task {!r}{}>".format(self.name, aliases)
+            aliases = f" ({', '.join(self.aliases)})"
+        return f"<Task {self.name!r}{aliases}>"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Task) or self.name != other.name:
@@ -118,11 +118,10 @@ class Task(Generic[T]):
         # defining equality on their end.)
         if self.body == other.body:
             return True
-        else:
-            try:
-                return self.body.__code__ == other.body.__code__
-            except AttributeError:
-                return False
+        try:
+            return self.body.__code__ == other.body.__code__
+        except AttributeError:
+            return False
 
     def __hash__(self) -> int:
         # Presumes name and body will never be changed. Hrm.
@@ -170,7 +169,7 @@ class Task(Generic[T]):
         params = list(sig.parameters.values())
         # TODO: this ought to also check if an extant 1st param _was_ a Context
         # arg, and yell similarly if not.
-        if not len(params):
+        if not params:
             # TODO: see TODO under __call__, this should be same type
             raise TypeError("Tasks must have an initial Context argument!")
         return sig.replace(parameters=params[1:])
@@ -397,8 +396,8 @@ class Call:
         """
         self.task = task
         self.called_as = called_as
-        self.args = args or tuple()
-        self.kwargs = kwargs or dict()
+        self.args = args or ()
+        self.kwargs = kwargs or {}
 
     # TODO: just how useful is this? feels like maybe overkill magic
     def __getattr__(self, name: str) -> Any:
@@ -410,7 +409,7 @@ class Call:
     def __repr__(self) -> str:
         aka = ""
         if self.called_as is not None and self.called_as != self.task.name:
-            aka = " (called as: {!r})".format(self.called_as)
+            aka = f" (called as: {self.called_as!r})"
         return "<{} {!r}{}, args: {!r}, kwargs: {!r}>".format(
             self.__class__.__name__,
             self.task.name,
@@ -443,12 +442,12 @@ class Call:
 
         .. versionadded:: 1.1
         """
-        return dict(
-            task=self.task,
-            called_as=self.called_as,
-            args=deepcopy(self.args),
-            kwargs=deepcopy(self.kwargs),
-        )
+        return {
+            "task": self.task,
+            "called_as": self.called_as,
+            "args": deepcopy(self.args),
+            "kwargs": deepcopy(self.kwargs),
+        }
 
     def clone(
         self,

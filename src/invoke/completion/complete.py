@@ -83,7 +83,6 @@ def complete(
             # case.)
             if context.flags[tail].takes_value:
                 debug("Found, and it takes a value, so no completion")
-                pass
             # Not taking values (eg bools): print task names
             else:
                 debug("Found, takes no value, printing task names")
@@ -118,14 +117,16 @@ def print_completion_script(shell: str, names: List[str]) -> None:
     }
     try:
         path = completions[shell]
-    except KeyError:
+    except KeyError as exc:
         err = 'Completion for shell "{}" not supported (options are: {}).'
-        raise ParseError(err.format(shell, ", ".join(sorted(completions))))
+        raise ParseError(
+            err.format(shell, ", ".join(sorted(completions)))
+        ) from exc
     debug("Printing completion script from %s", path)
     # Choose one arbitrary program name for script's own internal invocation
     # (also used to construct completion function names when necessary)
     binary = names[0]
-    with open(path, "r") as script:
+    with open(path, "r", encoding="utf-8") as script:
         print(
             script.read().format(binary=binary, spaced_names=" ".join(names))
         )

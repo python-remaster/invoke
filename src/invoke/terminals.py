@@ -66,8 +66,7 @@ if sys.platform == "win32":
             sizex = csbi.srWindow.Right - csbi.srWindow.Left + 1
             sizey = csbi.srWindow.Bottom - csbi.srWindow.Top + 1
             return sizex, sizey
-        else:
-            return (None, None)
+        return (None, None)
 
 else:
 
@@ -167,9 +166,7 @@ def cbreak_already_set(stream: IO) -> bool:
 
 
 @contextmanager
-def character_buffered(
-    stream: IO,
-) -> Generator[None, None, None]:
+def character_buffered(stream: IO) -> Generator[None, None, None]:
     """
     Force local terminal ``stream`` be character, not line, buffered.
 
@@ -211,9 +208,8 @@ def ready_for_reading(input_: IO) -> bool:
         return True
     if sys.platform == "win32":
         return msvcrt.kbhit()
-    else:
-        reads, _, _ = select.select([input_], [], [], 0.0)
-        return bool(reads and reads[0] is input_)
+    reads, _, _ = select.select([input_], [], [], 0.0)
+    return bool(reads and reads[0] is input_)
 
 
 def bytes_to_read(input_: IO) -> int:

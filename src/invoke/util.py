@@ -2,9 +2,9 @@ import io
 import logging
 import os
 import sys
-import threading
 from collections import namedtuple
 from contextlib import contextmanager
+from threading import Thread
 from types import TracebackType
 from typing import IO, Any, Generator, List, Optional, Tuple, Type, Union
 
@@ -113,7 +113,7 @@ def isatty(stream: IO) -> Union[bool, Any]:
     if hasattr(stream, "isatty") and callable(stream.isatty):
         return stream.isatty()
     # If there wasn't, see if it has a fileno, and if so, ask os.isatty
-    elif has_fileno(stream):
+    if has_fileno(stream):
         return os.isatty(stream.fileno())
     # If we got here, none of the above worked, so it's reasonable to assume
     # the darn thing isn't a real TTY.
@@ -136,7 +136,7 @@ def helpline(obj: object) -> Optional[str]:
     return docstring.lstrip().splitlines()[0]
 
 
-class ExceptionHandlingThread(threading.Thread):
+class ExceptionHandlingThread(Thread):
     """
     Thread handler making it easier for parent to handle thread exceptions.
 
@@ -184,7 +184,7 @@ class ExceptionHandlingThread(threading.Thread):
             # doesn't appear to be the case, then assume we're being used
             # directly and just use super() ourselves.
             # XXX https://github.com/python/mypy/issues/1424
-            if hasattr(self, "_run") and callable(self._run):  # type: ignore
+            if hasattr(self, "_run") and callable(self._run):
                 # TODO: this could be:
                 # - io worker with no 'result' (always local)
                 # - tunnel worker, also with no 'result' (also always local)
@@ -199,7 +199,7 @@ class ExceptionHandlingThread(threading.Thread):
                 # and let it continue acting like a normal thread (meh)
                 # - assume the run/sudo/etc case will use a queue inside its
                 # worker body, orthogonal to how exception handling works
-                self._run()  # type: ignore
+                self._run()
             else:
                 super().run()
         except BaseException:
@@ -207,13 +207,16 @@ class ExceptionHandlingThread(threading.Thread):
             self.exc_info = sys.exc_info()
             # And log now, in case we never get to later (e.g. if executing
             # program is hung waiting for us to do something)
-            msg = "Encountered exception {!r} in thread for {!r}"
             # Name is either target function's dunder-name, or just "_run" if
             # we were run subclass-wise.
             name = "_run"
             if "target" in self.kwargs:
                 name = self.kwargs["target"].__name__
-            debug(msg.format(self.exc_info[1], name))  # noqa
+            debug(
+                "Encountered exception %r in thread for %r",
+                self.exc_info[1],
+                name,
+            )
 
     def exception(self) -> Optional["ExceptionWrapper"]:
         """
