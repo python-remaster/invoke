@@ -49,7 +49,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     # Invocations, for all sorts of things
-    "invocations>=3.0.1",
+    # "invocations>=3.0.1",
     # Coverage!
     "coverage[toml]>=6.2,<7",
     "codecov>=2.1.12",
