@@ -91,8 +91,7 @@ class Loader:
             spec.loader.exec_module(module)
             # Return the module and the folder it was found in
             return module, str(module_parent)
-        msg = "ImportError loading {!r}, raising ImportError"
-        debug(msg.format(name))
+        debug("ImportError loading %r, raising ImportError", name)
         raise ImportError
 
 
@@ -121,7 +120,7 @@ class FilesystemLoader(Loader):
         return self._start or os.getcwd()
 
     def find(self, name: str) -> Optional[ModuleSpec]:
-        debug("FilesystemLoader find starting at {!r}".format(self.start))
+        debug("FilesystemLoader find starting at %r", self.start)
         spec = None
         module = "{}.py".format(name)
         paths = self.start.split(os.sep)
@@ -145,10 +144,9 @@ class FilesystemLoader(Loader):
                     )
                     break
             if spec:
-                debug("Found module: {!r}".format(spec))
+                debug("Found module: %r", spec)
                 return spec
         except (FileNotFoundError, ModuleNotFoundError):
-            msg = "ImportError loading {!r}, raising CollectionNotFound"
-            debug(msg.format(name))
+            debug("ImportError loading %r, raising CollectionNotFound", name)
             raise CollectionNotFound(name=name, start=self.start)
         return None
