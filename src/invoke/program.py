@@ -24,9 +24,9 @@ from .terminals import pty_size
 from .util import debug, enable_logging, helpline
 
 if TYPE_CHECKING:
+    from lexicon import Lexicon
     from .loader import Loader
     from .parser import ParseResult
-    from .util import Lexicon
 
 
 class Program:
