@@ -3,10 +3,19 @@ import os
 import sys
 from io import BytesIO
 from pathlib import Path
+from unittest.mock import ANY, Mock, patch
 
-from invoke.util import Lexicon
-from unittest.mock import patch, Mock, ANY
 import pytest
+from _util import (
+    ROOT,
+    expect,
+    load,
+    run,
+    skip_if_windows,
+    support,
+    support_file,
+    support_path,
+)
 from pytest import skip
 from pytest_relaxed import trap
 
@@ -23,22 +32,10 @@ from invoke import (
     Result,
     Task,
     UnexpectedExit,
+    main,
 )
-from invoke import main
-from invoke.util import cd
 from invoke.config import merge_dicts
-
-from _util import (
-    ROOT,
-    expect,
-    load,
-    run,
-    skip_if_windows,
-    support_file,
-    support_path,
-    support,
-)
-
+from invoke.util import Lexicon, cd
 
 pytestmark = pytest.mark.usefixtures("integration")
 

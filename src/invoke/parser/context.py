@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, Dict, List, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 try:
     from ..vendor.lexicon import Lexicon

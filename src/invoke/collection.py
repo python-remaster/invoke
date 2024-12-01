@@ -2,11 +2,10 @@ import copy
 from types import ModuleType
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .util import Lexicon, helpline
-
-from .config import merge_dicts, copy_dict
+from .config import copy_dict, merge_dicts
 from .parser import Context as ParserContext
 from .tasks import Task
+from .util import Lexicon, helpline
 
 
 class Collection:

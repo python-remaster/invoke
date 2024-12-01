@@ -1,13 +1,13 @@
-import pickle
 import os
+import pickle
 from os.path import join
+from unittest.mock import Mock, call, patch
 
-from unittest.mock import patch, call, Mock
 import pytest
+from _util import skip_if_windows, support
 from pytest_relaxed import raises
 
 from invoke import config as config_mod  # for accessing mocks
-from invoke.runners import Local
 from invoke.config import Config
 from invoke.exceptions import (
     AmbiguousEnvVar,
@@ -15,9 +15,7 @@ from invoke.exceptions import (
     UnknownFileType,
     UnpicklableConfigMember,
 )
-
-from _util import skip_if_windows, support
-
+from invoke.runners import Local
 
 pytestmark = pytest.mark.usefixtures("integration")
 

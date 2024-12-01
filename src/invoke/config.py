@@ -4,7 +4,7 @@ import os
 import types
 from importlib.util import spec_from_loader
 from os import PathLike
-from os.path import join, splitext, expanduser
+from os.path import expanduser, join, splitext
 from types import ModuleType
 from typing import Any, Dict, Iterator, Optional, Tuple, Type, Union
 
@@ -19,8 +19,8 @@ from .util import debug
 try:
     from importlib.machinery import SourceFileLoader
 except ImportError:  # PyPy3
-    from importlib._bootstrap import (  # type: ignore[no-redef]
-        _SourceFileLoader as SourceFileLoader,
+    from importlib._bootstrap import (
+        _SourceFileLoader as SourceFileLoader,  # type: ignore[no-redef]
     )
 
 

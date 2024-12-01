@@ -2,19 +2,18 @@
 Command-line completion mechanisms, executed by the core ``--complete`` flag.
 """
 
-from typing import List
 import glob
 import os
 import re
 import shlex
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from ..exceptions import Exit, ParseError
 from ..util import debug, task_name_sort_key
 
 if TYPE_CHECKING:
     from ..collection import Collection
-    from ..parser import Parser, ParseResult, ParserContext
+    from ..parser import Parser, ParserContext, ParseResult
 
 
 def complete(
