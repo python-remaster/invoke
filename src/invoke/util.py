@@ -8,6 +8,8 @@ import os
 import threading
 import sys
 
+from lexicon import Lexicon
+
 # NOTE: This is the canonical location for commonly-used vendored modules,
 # which is the only spot that performs this try/except to allow repackaged
 # Invoke to function (e.g. distro packages which unvendor the vendored bits and
@@ -17,13 +19,6 @@ import sys
 # TODO: would this make more sense to put _into_ invoke.vendor? That way, the
 # import lines which now read 'from .util import <third party stuff>' would be
 # more obvious. Requires packagers to leave invoke/vendor/__init__.py alone tho
-try:
-    from .vendor.lexicon import Lexicon  # noqa
-    from .vendor import yaml  # noqa
-except ImportError:
-    from lexicon import Lexicon  # type: ignore[no-redef] # noqa
-    import yaml  # type: ignore[no-redef] # noqa
-
 
 LOG_FORMAT = "%(name)s.%(module)s.%(funcName)s: %(message)s"
 
