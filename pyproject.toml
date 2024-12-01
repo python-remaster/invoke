@@ -61,7 +61,7 @@ dev = [
     "pytest-relaxed>=2",
     "pytest-cov>=4",
     # Linting
-    "pylint>=2.9.5",
+    "pylint>=3",
     # Formatting
     # Flake8 5.x seems to have an odd importlib-metadata incompatibility?
     "flake8>=4,<5",
@@ -74,6 +74,9 @@ dev = [
     "icecream>=2.1",
     # Publish
     "twine>=1.15"
+    # SCA/SAST
+    # "bandit>=1.6.2",
+    # "safety>=1.9.0"
 ]
 
 [project.scripts]
@@ -110,6 +113,30 @@ exclude = '''
     )
 )
 '''
+
+[tool.pylint]
+fail-under = 9.0
+
+[tool.pylint.MASTER]
+ignore-paths = "^src/invoke/vendor/.*$"
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "C0103",
+    "C0114",
+    "C0115",
+    "C0116",
+    "R0903",
+    "W0122",
+    "W0123",
+    "W0715"
+]
+
+[tool.pylint."FORMAT"]
+max-line-length = 79
+
+[tool.pylint."MISCELLANEOUS"]
+notes = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

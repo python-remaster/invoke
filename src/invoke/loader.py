@@ -122,7 +122,7 @@ class FilesystemLoader(Loader):
     def find(self, name: str) -> Optional[ModuleSpec]:
         debug("FilesystemLoader find starting at %r", self.start)
         spec = None
-        module = "{}.py".format(name)
+        module = f"{name}.py"
         paths = self.start.split(os.sep)
         try:
             # walk the path upwards to check for dynamic import
@@ -133,7 +133,7 @@ class FilesystemLoader(Loader):
                         name, os.path.join(path, module)
                     )
                     break
-                elif name in os.listdir(path) and os.path.exists(
+                if name in os.listdir(path) and os.path.exists(
                     os.path.join(path, name, "__init__.py")
                 ):
                     basepath = os.path.join(path, name)
@@ -146,7 +146,7 @@ class FilesystemLoader(Loader):
             if spec:
                 debug("Found module: %r", spec)
                 return spec
-        except (FileNotFoundError, ModuleNotFoundError):
+        except (FileNotFoundError, ModuleNotFoundError) as exc:
             debug("ImportError loading %r, raising CollectionNotFound", name)
-            raise CollectionNotFound(name=name, start=self.start)
+            raise CollectionNotFound(name=name, start=self.start) from exc
         return None

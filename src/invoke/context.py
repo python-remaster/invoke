@@ -64,12 +64,12 @@ class Context(DataProxy):
         #: A list of commands to run (via "&&") before the main argument to any
         #: `run` or `sudo` calls. Note that the primary API for manipulating
         #: this list is `prefix`; see its docs for details.
-        command_prefixes: List[str] = list()
+        command_prefixes: List[str] = []
         self._set(command_prefixes=command_prefixes)
         #: A list of directories to 'cd' into before running commands with
         #: `run` or `sudo`; intended for management via `cd`, please see its
         #: docs for details.
-        command_cwds: List[str] = list()
+        command_cwds: List[str] = []
         self._set(command_cwds=command_cwds)
 
     @property
@@ -206,17 +206,17 @@ class Context(DataProxy):
         # through to 'run'...
         user_flags = ""
         if user is not None:
-            user_flags = "-H -u {} ".format(user)
+            user_flags = f"-H -u {user} "
         env_flags = ""
         if env:
-            env_flags = "--preserve-env='{}' ".format(",".join(env.keys()))
+            env_flags = f"--preserve-env='{', '.join(env.keys())}' "
         command = self._prefix_commands(command)
         cmd_str = "sudo -S -p '{}' {}{}{}".format(
             prompt, env_flags, user_flags, command
         )
         watcher = FailingResponder(
             pattern=re.escape(prompt),
-            response="{}\n".format(password),
+            response=f"{password}\n",
             sentinel="Sorry, try again.\n",
         )
         # Ensure we merge any user-specified watchers with our own.
@@ -241,10 +241,9 @@ class Context(DataProxy):
             if isinstance(failure.reason, ResponseNotAccepted):
                 # NOTE: not bothering with 'reason' here, it's pointless.
                 error = AuthFailure(result=failure.result, prompt=prompt)
-                raise error
+                raise error from failure
             # Reraise for any other error so it bubbles up normally.
-            else:
-                raise
+            raise
 
     # TODO: wonder if it makes sense to move this part of things inside Runner,
     # which would grow a `prefixes` and `cwd` init kwargs or similar. The less
@@ -259,7 +258,7 @@ class Context(DataProxy):
         prefixes = list(self.command_prefixes)
         current_directory = self.cwd
         if current_directory:
-            prefixes.insert(0, "cd {}".format(current_directory))
+            prefixes.insert(0, f"cd {current_directory}")
 
         return " && ".join(prefixes + [command])
 
@@ -332,6 +331,7 @@ class Context(DataProxy):
             # `cd` typically being shorthand for "go to user's $HOME".
             return ""
 
+        i = 0
         # get the index for the subset of paths starting with the last / or ~
         for i, path in reversed(list(enumerate(self.command_cwds))):
             if path.startswith("~") or path.startswith("/"):
@@ -494,7 +494,7 @@ class MockContext(Context):
                 err = "Not sure how to yield results from a {!r}"
                 raise TypeError(err.format(type(results)))
             # Save results for use by the method
-            self._set("__{}".format(method), results)
+            self._set(f"__{method}", results)
             # Wrap the method in a Mock
             self._set(method, Mock(wraps=getattr(self, method)))
 
@@ -525,7 +525,7 @@ class MockContext(Context):
             if isinstance(obj, dict):
                 try:
                     obj = obj[command]
-                except KeyError:
+                except KeyError as err:
                     # TODO: could optimize by skipping this if not any regex
                     # objects in keys()?
                     for key, value in obj.items():
@@ -534,7 +534,7 @@ class MockContext(Context):
                             break
                     else:
                         # Nope, nothing did match.
-                        raise KeyError
+                        raise KeyError from err
             # Here, the value was either never a dict or has been extracted
             # from one, so we can assume it's an iterable of Result objects due
             # to work done by __init__.
@@ -544,18 +544,18 @@ class MockContext(Context):
             if not result.command:
                 result.command = command
             return result
-        except (AttributeError, IndexError, KeyError, StopIteration):
+        except (AttributeError, IndexError, KeyError, StopIteration) as err:
             # raise_from(NotImplementedError(command), None)
-            raise NotImplementedError(command)
+            raise NotImplementedError(command) from err
 
-    def run(self, command: str, *args: Any, **kwargs: Any) -> Result:
+    def run(self, command: str, *_: Any, **kwargs: Any) -> Result:
         # TODO: perform more convenience stuff associating args/kwargs with the
         # result? E.g. filling in .command, etc? Possibly useful for debugging
         # if one hits unexpected-order problems with what they passed in to
         # __init__.
         return self._yield_result("__run", command)
 
-    def sudo(self, command: str, *args: Any, **kwargs: Any) -> Result:
+    def sudo(self, command: str, *_: Any, **kwargs: Any) -> Result:
         # TODO: this completely nukes the top-level behavior of sudo(), which
         # could be good or bad, depending. Most of the time I think it's good.
         # No need to supply dummy password config, etc.
@@ -585,7 +585,7 @@ class MockContext(Context):
 
         .. versionadded:: 1.0
         """
-        attname = "__{}".format(attname)
+        attname = f"__{attname}"
         heck = TypeError(
             "Can't update results for non-dict or nonexistent mock results!"
         )
@@ -594,8 +594,8 @@ class MockContext(Context):
         # pointless, at that point, just make a new MockContext eh?
         try:
             value = getattr(self, attname)
-        except AttributeError:
-            raise heck
+        except AttributeError as err:
+            raise heck from err
         if not isinstance(value, dict):
             raise heck
         # OK, we're good to modify, so do so.

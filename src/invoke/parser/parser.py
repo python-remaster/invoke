@@ -392,7 +392,7 @@ class ParseMachine(StateMachine):
             # Skip casting so the bool gets preserved
             self.flag.set_value(True, cast=False)
 
-    def check_ambiguity(self, value: Any) -> bool:
+    def check_ambiguity(self, value: Any) -> None:
         """
         Guard against ambiguity when current flag takes an optional value.
 
@@ -401,11 +401,11 @@ class ParseMachine(StateMachine):
         # No flag is currently being examined, or one is but it doesn't take an
         # optional value? Ambiguity isn't possible.
         if not (self.flag and self.flag.optional):
-            return False
+            return
         # We *are* dealing with an optional-value flag, but it's already
         # received a value? There can't be ambiguity here either.
         if self.flag.raw_value is not None:
-            return False
+            return
         # Otherwise, there *may* be ambiguity if 1 or more of the below tests
         # fail.
         tests = []
@@ -431,14 +431,14 @@ class ParseMachine(StateMachine):
         # Update state
         try:
             self.flag = self.context.flags[flag]
-        except KeyError as e:
+        except KeyError as flag_exc:
             # Try fallback to initial/core flag
             try:
                 self.flag = self.initial.flags[flag]
-            except KeyError:
+            except KeyError as orig_exc:
                 # If it wasn't in either, raise the original context's
                 # exception, as that's more useful / correct.
-                raise e
+                raise flag_exc from orig_exc
         debug("Moving to flag %r", self.flag)
         # Bookkeeping for iterable-type flags (where the typical 'value
         # non-empty/nondefault -> clearly it got its value already' test is

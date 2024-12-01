@@ -121,12 +121,12 @@ class Collection:
         elif isinstance(obj, (Collection, ModuleType)):
             method = self.add_collection
         else:
-            raise TypeError("No idea how to insert {!r}!".format(type(obj)))
+            raise TypeError(f"No idea how to insert {type(obj)}!")
         method(obj, name=name)
 
     def __repr__(self) -> str:
         task_names = list(self.tasks.keys())
-        collections = ["{}...".format(x) for x in self.collections.keys()]
+        collections = [f"{x}..." for x in self.collections.keys()]
         return "<Collection {!r}: {}>".format(
             self.name, ", ".join(sorted(task_names) + sorted(collections))
         )
@@ -201,9 +201,10 @@ class Collection:
             # Explicitly given name wins over root ns name (if applicable),
             # which wins over actual module name.
             args = [name or obj_name or module_name]
-            kwargs = dict(
-                loaded_from=loaded_from, auto_dash_names=auto_dash_names
-            )
+            kwargs = {
+                'loaded_from': loaded_from,
+                'auto_dash_names': auto_dash_names,
+            }
             instance = cls(*args, **kwargs)
             instance.__doc__ = module.__doc__
             return instance
@@ -267,14 +268,17 @@ class Collection:
                 name = task.name
             # XXX https://github.com/python/mypy/issues/1424
             elif hasattr(task.body, "func_name"):
-                name = task.body.func_name  # type: ignore
+                name = task.body.func_name
             elif hasattr(task.body, "__name__"):
                 name = task.__name__
             else:
                 raise ValueError("Could not obtain a name for this task!")
         name = self.transform(name)
         if name in self.collections:
-            err = "Name conflict: this collection has a sub-collection named {!r} already"  # noqa
+            err = (
+                "Name conflict: this collection has a sub-collection named "
+                + "{!r} already"
+            )
             raise ValueError(err.format(name))
         self.tasks[name] = task
         for alias in list(task.aliases) + list(aliases or []):
@@ -316,7 +320,9 @@ class Collection:
         name = self.transform(name)
         # Test for conflict
         if name in self.tasks:
-            err = "Name conflict: this collection has a task named {!r} already"  # noqa
+            err = (
+                "Name conflict: this collection has a task named {!r} already"
+            )
             raise ValueError(err.format(name))
         # Insert
         self.collections[name] = coll

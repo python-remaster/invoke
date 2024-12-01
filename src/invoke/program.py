@@ -4,7 +4,7 @@ import json
 import os
 import sys
 import textwrap
-from importlib import import_module  # buffalo buffalo
+from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -43,142 +43,18 @@ class Program:
     .. versionadded:: 1.0
     """
 
-    core: "ParseResult"
-
-    def core_args(self) -> List["Argument"]:
-        """
-        Return default core `.Argument` objects, as a list.
-
-        .. versionadded:: 1.0
-        """
-        # Arguments present always, even when wrapped as a different binary
-        return [
-            Argument(
-                names=("command-timeout", "T"),
-                kind=int,
-                help="Specify a global command execution timeout, in seconds.",
-            ),
-            Argument(
-                names=("complete",),
-                kind=bool,
-                default=False,
-                help="Print tab-completion candidates for given parse remainder.",  # noqa
-            ),
-            Argument(
-                names=("config", "f"),
-                help="Runtime configuration file to use.",
-            ),
-            Argument(
-                names=("debug", "d"),
-                kind=bool,
-                default=False,
-                help="Enable debug output.",
-            ),
-            Argument(
-                names=("dry", "R"),
-                kind=bool,
-                default=False,
-                help="Echo commands instead of running.",
-            ),
-            Argument(
-                names=("echo", "e"),
-                kind=bool,
-                default=False,
-                help="Echo executed commands before running.",
-            ),
-            Argument(
-                names=("help", "h"),
-                optional=True,
-                help="Show core or per-task help and exit.",
-            ),
-            Argument(
-                names=("hide",),
-                help="Set default value of run()'s 'hide' kwarg.",
-            ),
-            Argument(
-                names=("list", "l"),
-                optional=True,
-                help="List available tasks, optionally limited to a namespace.",  # noqa
-            ),
-            Argument(
-                names=("list-depth", "D"),
-                kind=int,
-                default=0,
-                help="When listing tasks, only show the first INT levels.",
-            ),
-            Argument(
-                names=("list-format", "F"),
-                help="Change the display format used when listing tasks. Should be one of: flat (default), nested, json.",  # noqa
-                default="flat",
-            ),
-            Argument(
-                names=("print-completion-script",),
-                kind=str,
-                default="",
-                help="Print the tab-completion script for your preferred shell (bash|zsh|fish).",  # noqa
-            ),
-            Argument(
-                names=("prompt-for-sudo-password",),
-                kind=bool,
-                default=False,
-                help="Prompt user at start of session for the sudo.password config value.",  # noqa
-            ),
-            Argument(
-                names=("pty", "p"),
-                kind=bool,
-                default=False,
-                help="Use a pty when executing shell commands.",
-            ),
-            Argument(
-                names=("version", "V"),
-                kind=bool,
-                default=False,
-                help="Show version and exit.",
-            ),
-            Argument(
-                names=("warn-only", "w"),
-                kind=bool,
-                default=False,
-                help="Warn, instead of failing, when shell commands fail.",
-            ),
-            Argument(
-                names=("write-pyc",),
-                kind=bool,
-                default=False,
-                help="Enable creation of .pyc files.",
-            ),
-        ]
-
-    def task_args(self) -> List["Argument"]:
-        """
-        Return default task-related `.Argument` objects, as a list.
-
-        These are only added to the core args in "task runner" mode (the
-        default for ``invoke`` itself) - they are omitted when the constructor
-        is given a non-empty ``namespace`` argument ("bundled namespace" mode).
-
-        .. versionadded:: 1.0
-        """
-        # Arguments pertaining specifically to invocation as 'invoke' itself
-        # (or as other arbitrary-task-executing programs, like 'fab')
-        return [
-            Argument(
-                names=("collection", "c"),
-                help="Specify collection name to load.",
-            ),
-            Argument(
-                names=("no-dedupe",),
-                kind=bool,
-                default=False,
-                help="Disable task deduplication.",
-            ),
-            Argument(
-                names=("search-root", "r"),
-                help="Change root directory used for finding task modules.",
-            ),
-        ]
-
     argv: List[str]
+    config: "Config"
+    collection: "Collection"
+    core: "ParseResult"
+    core_via_tasks: "ParserContext"
+    list_root: Optional[str]
+    list_depth: Optional[int]
+    list_format: str
+    parser: "Parser"
+    scoped_collection: "Collection"
+    tasks: "ParseResult"
+
     # Other class-level global variables a subclass might override sometime
     # maybe?
     leading_indent_width = 2
@@ -342,7 +218,12 @@ class Program:
         if self.args["prompt-for-sudo-password"].value:
             prompt = "Desired 'sudo.password' config value: "
             sudo["password"] = getpass.getpass(prompt)
-        overrides = dict(run=run, tasks=tasks, sudo=sudo, timeouts=timeouts)
+        overrides = {
+            "run": run,
+            "tasks": tasks,
+            "sudo": sudo,
+            "timeouts": timeouts,
+        }
         self.config.load_overrides(overrides, merge=False)
         runtime_path = self.args.config.value
         if runtime_path is None:
@@ -396,25 +277,24 @@ class Program:
             # Create an Executor, passing in the data resulting from the prior
             # steps, then tell it to execute the tasks.
             self.execute()
-        except (UnexpectedExit, Exit, ParseError) as e:
-            debug("Received a possibly-skippable exception: %r", e)
+        except (UnexpectedExit, Exit, ParseError) as exc:
+            debug("Received a possibly-skippable exception: %r", exc)
             # Print error messages from parser, runner, etc if necessary;
             # prevents messy traceback but still clues interactive user into
             # problems.
-            if isinstance(e, ParseError):
-                print(e, file=sys.stderr)
-            if isinstance(e, Exit) and e.message:
-                print(e.message, file=sys.stderr)
-            if isinstance(e, UnexpectedExit) and e.result.hide:
-                print(e, file=sys.stderr, end="")
+            if isinstance(exc, ParseError):
+                print(exc, file=sys.stderr)
+            if isinstance(exc, Exit) and exc.message:
+                print(exc.message, file=sys.stderr)
+            if isinstance(exc, UnexpectedExit) and exc.result.hide:
+                print(exc, file=sys.stderr, end="")
             # Terminate execution unless we were told not to.
             if exit:
-                if isinstance(e, UnexpectedExit):
-                    code = e.result.exited
-                elif isinstance(e, Exit):
-                    code = e.code
-                elif isinstance(e, ParseError):
-                    code = 1
+                code = 1
+                if isinstance(exc, UnexpectedExit):
+                    code = exc.result.exited
+                elif isinstance(exc, Exit):
+                    code = exc.code
                 sys.exit(code)
             else:
                 debug("Invoked as run(..., exit=False), ignoring exception")
@@ -509,10 +389,9 @@ class Program:
                 )
                 self.print_task_help(halp)
                 raise Exit
-            else:
-                # TODO: feels real dumb to factor this out of Parser, but...we
-                # should?
-                raise ParseError("No idea what '{}' is!".format(halp))
+            # TODO: feels real dumb to factor this out of Parser, but...we
+            # should?
+            raise ParseError(f"No idea what '{halp}' is!")
 
         # Print discovered tasks if necessary
         list_root = self.args.list.value  # will be True or string
@@ -525,9 +404,10 @@ class Program:
                 try:
                     sub = self.collection.subcollection_from_path(list_root)
                     self.scoped_collection = sub
-                except KeyError:
-                    msg = "Sub-collection '{}' not found!"
-                    raise Exit(msg.format(list_root))
+                except KeyError as exc:
+                    raise Exit(
+                        f"Sub-collection {list_root!r} not found!"
+                    ) from exc
             self.list_tasks()
             raise Exit
 
@@ -552,7 +432,8 @@ class Program:
 
     def no_tasks_given(self) -> None:
         debug(
-            "No tasks specified for execution and no default task; printing global help as fallback"  # noqa
+            "No tasks specified for execution and no default task; printing "
+            + "global help as fallback"
         )
         self.print_help()
         raise Exit
@@ -672,16 +553,14 @@ class Program:
         return ParserContext(args=args)
 
     def print_version(self) -> None:
-        print("{} {}".format(self.name, self.version or "unknown"))
+        print(f"{self.name} {self.version or 'unknown'}")
 
     def print_help(self) -> None:
         usage_suffix = "task1 [--task1-opts] ... taskN [--taskN-opts]"
         if self.namespace is not None:
             usage_suffix = "<subcommand> [--subcommand-opts] ..."
-        print("Usage: {} [--core-opts] {}".format(self.binary, usage_suffix))
-        print("")
-        print("Core options:")
-        print("")
+        print(f"Usage: {self.binary} [--core-opts] {usage_suffix}")
+        print("\nCore options:\n")
         self.print_columns(self.initial_context.help_tuples())
         if self.namespace is not None:
             self.list_tasks()
@@ -729,8 +608,10 @@ class Program:
                 loaded_from=parent,
                 auto_dash_names=self.config.tasks.auto_dash_names,
             )
-        except CollectionNotFound as e:
-            raise Exit("Can't find any collection named {!r}!".format(e.name))
+        except CollectionNotFound as exc:
+            raise Exit(
+                f"Cannot find any collection named {exc.name!r}!"
+            ) from exc
 
     def _update_core_context(
         self, context: ParserContext, new_args: Dict[str, Any]
@@ -743,7 +624,7 @@ class Program:
             if arg.got_value:
                 context.args[key]._value = arg._value
 
-    def _make_parser(self) -> Parser:
+    def _make_parser(self) -> "Parser":
         return Parser(
             initial=self.initial_context,
             contexts=self.collection.to_contexts(
@@ -786,10 +667,10 @@ class Program:
         tuples = ctx.help_tuples()
         docstring = inspect.getdoc(self.collection[name])
         header = "Usage: {} [--core-opts] {} {}[other tasks here ...]"
-        opts = "[--options] " if tuples else ""
-        print(header.format(self.binary, name, opts))
-        print("")
-        print("Docstring:")
+        print(
+            header.format(self.binary, name, "[--options] " if tuples else "")
+        )
+        print("\nDocstring:")
         if docstring:
             # Really wish textwrap worked better for this.
             for line in docstring.splitlines():
@@ -816,7 +697,7 @@ class Program:
             raise Exit(msg.format(focus.name))
         # TODO: now that flat/nested are almost 100% unified, maybe rethink
         # this a bit?
-        getattr(self, "list_{}".format(self.list_format))()
+        getattr(self, f"list_{self.list_format}")()
 
     def list_flat(self) -> None:
         pairs = self._make_pairs(self.scoped_collection)
@@ -847,8 +728,8 @@ class Program:
             # namespace/root), tack on some dots to make it clear these names
             # require dotted paths to invoke.
             if ancestors or self.list_root:
-                displayname = ".{}".format(displayname)
-                aliases = [".{}".format(x) for x in aliases]
+                displayname = f".{displayname}"
+                aliases = [f".{x}" for x in aliases]
             # Nested? Indent, and add asterisks to default-tasks.
             if self.list_format == "nested":
                 prefix = indent
@@ -867,7 +748,7 @@ class Program:
                 if is_default and ancestors:
                     aliases.insert(0, prefix)
             # Generate full name and help columns and add to pairs.
-            alias_str = " ({})".format(", ".join(aliases)) if aliases else ""
+            alias_str = f" ({', '.join(aliases)})" if aliases else ""
             full = prefix + displayname + alias_str
             pairs.append((full, helpline(task)))
         # Determine whether we're at max-depth or not
@@ -875,14 +756,14 @@ class Program:
         for name, subcoll in sorted(coll.collections.items()):
             displayname = name
             if ancestors or self.list_root:
-                displayname = ".{}".format(displayname)
+                displayname = f".{displayname}"
             if truncate:
                 tallies = [
-                    "{} {}".format(len(getattr(subcoll, attr)), attr)
+                    f"{len(getattr(subcoll, attr))} {attr}"
                     for attr in ("tasks", "collections")
                     if getattr(subcoll, attr)
                 ]
-                displayname += " [{}]".format(", ".join(tallies))
+                displayname += f" [{', '.join(tallies)}]"
             if self.list_format == "nested":
                 pairs.append((indent + displayname, helpline(subcoll)))
             elif self.list_format == "flat" and truncate:
@@ -915,13 +796,13 @@ class Program:
     def task_list_opener(self, extra: str = "") -> str:
         root = self.list_root
         depth = self.list_depth
-        specifier = " '{}'".format(root) if root else ""
+        specifier = f" {root!r}" if root else ""
         tail = ""
         if depth or extra:
-            depthstr = "depth={}".format(depth) if depth else ""
+            depthstr = f"depth={depth}" if depth else ""
             joiner = "; " if (depth and extra) else ""
-            tail = " ({}{}{})".format(depthstr, joiner, extra)
-        text = "Available{} tasks{}".format(specifier, tail)
+            tail = f" ({depthstr}{joiner}{extra})"
+        text = f"Available{specifier} tasks{tail}"
         # TODO: do use cases w/ bundled namespace want to display things like
         # root and depth too? Leaving off for now...
         if self.namespace is not None:
@@ -932,7 +813,7 @@ class Program:
         self, pairs: Sequence[Tuple[str, Optional[str]]], extra: str = ""
     ) -> None:
         root = self.list_root
-        print("{}:\n".format(self.task_list_opener(extra=extra)))
+        print(self.task_list_opener(extra=extra) + ":\n")
         self.print_columns(pairs)
         # TODO: worth stripping this out for nested? since it's signified with
         # asterisk there? ugggh
@@ -940,10 +821,10 @@ class Program:
         if default:
             specific = ""
             if root:
-                specific = " '{}'".format(root)
-                default = ".{}".format(default)
+                specific = f" {root!r}"
+                default = f".{default}"
             # TODO: trim/prefix dots
-            print("Default{} task: {}\n".format(specific, default))
+            print(f"Default{specific} task: {default}\n")
 
     def print_columns(
         self, tuples: Sequence[Tuple[str, Optional[str]]]
@@ -989,3 +870,136 @@ class Program:
             else:
                 print(spec.rstrip())
         print("")
+
+    def core_args(self) -> List["Argument"]:
+        """
+        Return default core `.Argument` objects, as a list.
+
+        .. versionadded:: 1.0
+        """
+        # Arguments present always, even when wrapped as a different binary
+        return [
+            Argument(
+                names=("command-timeout", "T"),
+                kind=int,
+                help="Specify a global command execution timeout, in seconds.",
+            ),
+            Argument(
+                names=("complete",),
+                kind=bool,
+                default=False,
+                help="Print tab-completion candidates for given parse remainder.",  # noqa
+            ),
+            Argument(
+                names=("config", "f"),
+                help="Runtime configuration file to use.",
+            ),
+            Argument(
+                names=("debug", "d"),
+                kind=bool,
+                default=False,
+                help="Enable debug output.",
+            ),
+            Argument(
+                names=("dry", "R"),
+                kind=bool,
+                default=False,
+                help="Echo commands instead of running.",
+            ),
+            Argument(
+                names=("echo", "e"),
+                kind=bool,
+                default=False,
+                help="Echo executed commands before running.",
+            ),
+            Argument(
+                names=("help", "h"),
+                optional=True,
+                help="Show core or per-task help and exit.",
+            ),
+            Argument(
+                names=("hide",),
+                help="Set default value of run()'s 'hide' kwarg.",
+            ),
+            Argument(
+                names=("list", "l"),
+                optional=True,
+                help="List available tasks, optionally limited to a namespace.",  # noqa
+            ),
+            Argument(
+                names=("list-depth", "D"),
+                kind=int,
+                default=0,
+                help="When listing tasks, only show the first INT levels.",
+            ),
+            Argument(
+                names=("list-format", "F"),
+                help="Change the display format used when listing tasks. Should be one of: flat (default), nested, json.",  # noqa
+                default="flat",
+            ),
+            Argument(
+                names=("print-completion-script",),
+                kind=str,
+                default="",
+                help="Print the tab-completion script for your preferred shell (bash|zsh|fish).",  # noqa
+            ),
+            Argument(
+                names=("prompt-for-sudo-password",),
+                kind=bool,
+                default=False,
+                help="Prompt user at start of session for the sudo.password config value.",  # noqa
+            ),
+            Argument(
+                names=("pty", "p"),
+                kind=bool,
+                default=False,
+                help="Use a pty when executing shell commands.",
+            ),
+            Argument(
+                names=("version", "V"),
+                kind=bool,
+                default=False,
+                help="Show version and exit.",
+            ),
+            Argument(
+                names=("warn-only", "w"),
+                kind=bool,
+                default=False,
+                help="Warn, instead of failing, when shell commands fail.",
+            ),
+            Argument(
+                names=("write-pyc",),
+                kind=bool,
+                default=False,
+                help="Enable creation of .pyc files.",
+            ),
+        ]
+
+    def task_args(self) -> List["Argument"]:
+        """
+        Return default task-related `.Argument` objects, as a list.
+
+        These are only added to the core args in "task runner" mode (the
+        default for ``invoke`` itself) - they are omitted when the constructor
+        is given a non-empty ``namespace`` argument ("bundled namespace" mode).
+
+        .. versionadded:: 1.0
+        """
+        # Arguments pertaining specifically to invocation as 'invoke' itself
+        # (or as other arbitrary-task-executing programs, like 'fab')
+        return [
+            Argument(
+                names=("collection", "c"),
+                help="Specify collection name to load.",
+            ),
+            Argument(
+                names=("no-dedupe",),
+                kind=bool,
+                default=False,
+                help="Disable task deduplication.",
+            ),
+            Argument(
+                names=("search-root", "r"),
+                help="Change root directory used for finding task modules.",
+            ),
+        ]

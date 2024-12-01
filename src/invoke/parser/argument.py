@@ -80,7 +80,7 @@ class Argument:
     def __repr__(self) -> str:
         nicks = ""
         if self.nicknames:
-            nicks = " ({})".format(", ".join(self.nicknames))
+            nicks = f" ({', '.join(self.nicknames)})"
         flags = ""
         if self.positional or self.optional:
             flags = " "
@@ -92,10 +92,8 @@ class Argument:
         # Argument.__init__?
         kind = ""
         if self.kind != str:
-            kind = " [{}]".format(self.kind.__name__)
-        return "<{}: {}{}{}{}>".format(
-            self.__class__.__name__, self.name, nicks, kind, flags
-        )
+            kind = f" [{self.kind.__name__}]"
+        return f"<{self.__class__.__name__}: {self.name}{nicks}{kind}{flags}>"
 
     @property
     def name(self) -> Optional[str]:

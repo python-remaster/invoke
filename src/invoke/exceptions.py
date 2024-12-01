@@ -7,6 +7,7 @@ condition in a way easily told apart from other, truly unexpected errors".
 """
 
 from pprint import pformat
+from textwrap import dedent
 from traceback import format_exception
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
@@ -95,9 +96,7 @@ class Failure(Exception):
         template = "<{}: cmd={!r}{}>"
         rest = ""
         if kwargs:
-            rest = " " + " ".join(
-                "{}={}".format(key, value) for key, value in kwargs.items()
-            )
+            rest = " " + " ".join(f"{k}={v}" for k, v in kwargs.items())
         return template.format(
             self.__class__.__name__, self.result.command, rest
         )
@@ -122,18 +121,20 @@ class UnexpectedExit(Failure):
         stdout, stderr = self.streams_for_display()
         command = self.result.command
         exited = self.result.exited
-        template = """Encountered a bad command exit code!
+        return dedent(
+            """\
+            Encountered a bad command exit code!
 
-Command: {!r}
+            Command: {!r}
 
-Exit code: {}
+            Exit code: {}
 
-Stdout:{}
+            Stdout:{}
 
-Stderr:{}
+            Stderr:{}
 
-"""
-        return template.format(command, exited, stdout, stderr)
+            """
+        ).format(command, exited, stdout, stderr)
 
     def _repr(self, **kwargs: Any) -> str:
         kwargs.setdefault("exited", self.result.exited)
@@ -155,16 +156,18 @@ class CommandTimedOut(Failure):
     def __str__(self) -> str:
         stdout, stderr = self.streams_for_display()
         command = self.result.command
-        template = """Command did not complete within {} seconds!
+        return dedent(
+            """\
+            Command did not complete within {} seconds!
 
-Command: {!r}
+            Command: {!r}
 
-Stdout:{}
+            Stdout:{}
 
-Stderr:{}
+            Stderr:{}
 
-"""
-        return template.format(self.timeout, command, stdout, stderr)
+            """
+        ).format(self.timeout, command, stdout, stderr)
 
 
 class AuthFailure(Failure):
@@ -180,7 +183,7 @@ class AuthFailure(Failure):
     """
 
     def __init__(self, result: "Result", prompt: str) -> None:
-        self.result = result
+        super().__init__(result)
         self.prompt = prompt
 
     def __str__(self) -> str:
@@ -250,8 +253,6 @@ class PlatformError(Exception):
     .. versionadded:: 1.0
     """
 
-    pass
-
 
 class AmbiguousEnvVar(Exception):
     """
@@ -259,8 +260,6 @@ class AmbiguousEnvVar(Exception):
 
     .. versionadded:: 1.0
     """
-
-    pass
 
 
 class UncastableEnvVar(Exception):
@@ -273,8 +272,6 @@ class UncastableEnvVar(Exception):
     .. versionadded:: 1.0
     """
 
-    pass
-
 
 class UnknownFileType(Exception):
     """
@@ -282,8 +279,6 @@ class UnknownFileType(Exception):
 
     .. versionadded:: 1.0
     """
-
-    pass
 
 
 class UnpicklableConfigMember(Exception):
@@ -297,8 +292,6 @@ class UnpicklableConfigMember(Exception):
 
     .. versionadded:: 1.0.2
     """
-
-    pass
 
 
 def _printable_kwargs(kwargs: Any) -> Dict[str, Any]:
@@ -370,13 +363,13 @@ class ThreadException(Exception):
             ", ".join(x.type.__name__ for x in self.exceptions),
             "\n\n".join(details),
         )
-        return """
-Saw {} exceptions within threads ({}):
+        return dedent(
+            f"""\
+            Saw {args[0]} exceptions within threads ({args[1]}):
 
 
-{}
-""".format(
-            *args
+            {args[2]}
+            """
         )
 
 
@@ -395,8 +388,6 @@ class WatcherError(Exception):
     .. versionadded:: 1.0
     """
 
-    pass
-
 
 class ResponseNotAccepted(WatcherError):
     """
@@ -407,8 +398,6 @@ class ResponseNotAccepted(WatcherError):
 
     .. versionadded:: 1.0
     """
-
-    pass
 
 
 class SubprocessPipeError(Exception):
@@ -421,5 +410,3 @@ class SubprocessPipeError(Exception):
 
     .. versionadded:: 1.3
     """
-
-    pass

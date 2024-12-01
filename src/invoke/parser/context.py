@@ -97,10 +97,10 @@ class ParserContext:
     def __repr__(self) -> str:
         aliases = ""
         if self.aliases:
-            aliases = " ({})".format(", ".join(self.aliases))
-        name = (" {!r}{}".format(self.name, aliases)) if self.name else ""
-        args = (": {!r}".format(self.args)) if self.args else ""
-        return "<parser/Context{}{}>".format(name, args)
+            aliases = f" ({', '.join(self.aliases)})"
+        name = f" {self.name!r}{aliases}" if self.name else ""
+        args = f": {self.args!r}" if self.args else ""
+        return f"<parser/Context{name}{args}>"
 
     def add_arg(self, *args: Any, **kwargs: Any) -> None:
         """
@@ -127,7 +127,10 @@ class ParserContext:
         # Uniqueness constraint: no name collisions
         for name in arg.names:
             if name in self.args:
-                msg = "Tried to add an argument named {!r} but one already exists!"  # noqa
+                msg = (
+                    "Tried to add an argument named {!r} but one already "
+                    + "exists!"
+                )
                 raise ValueError(msg.format(name))
         # First name used as "main" name for purposes of aliasing
         main = arg.names[0]  # NOT arg.name
@@ -148,7 +151,7 @@ class ParserContext:
             # Invert the 'main' flag name here, which will be a dashed version
             # of the primary argument name if underscore-to-dash transformation
             # occurred.
-            inverse_name = to_flag("no-{}".format(main))
+            inverse_name = to_flag(f"no-{main}")
             self.inverse_flags[inverse_name] = to_flag(main)
 
     @property
@@ -182,7 +185,10 @@ class ParserContext:
         """
         # Obtain arg obj
         if flag not in self.flags:
-            err = "{!r} is not a valid flag for this context! Valid flags are: {!r}"  # noqa
+            err = (
+                "{!r} is not a valid flag for this context! Valid flags are: "
+                + "{!r}"
+            )
             raise ValueError(err.format(flag, self.flags.keys()))
         arg = self.flags[flag]
         # Determine expected value type, if any
@@ -194,18 +200,17 @@ class ParserContext:
                 # Short flags are -f VAL, long are --foo=VAL
                 # When optional, also, -f [VAL] and --foo[=VAL]
                 if len(name.strip("-")) == 1:
-                    value_ = ("[{}]".format(value)) if arg.optional else value
-                    valuestr = " {}".format(value_)
+                    value_ = f"[{value}]" if arg.optional else value
+                    valuestr = f" {value_}"
                 else:
-                    valuestr = "={}".format(value)
+                    valuestr = f"={value}"
                     if arg.optional:
-                        valuestr = "[{}]".format(valuestr)
+                        valuestr = f"[{valuestr}]"
             else:
                 # no value => boolean
                 # check for inverse
                 if name in self.inverse_flags.values():
-                    name = "--[no-]{}".format(name[2:])
-
+                    name = f"--[no-]{name[2:]}"
                 valuestr = ""
             # Tack together
             full_names.append(name + valuestr)

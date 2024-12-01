@@ -8,6 +8,14 @@ from os.path import expanduser, join, splitext
 from types import ModuleType
 from typing import Any, Dict, Iterator, Optional, Tuple, Type, Union
 
+try:
+    # pylint: disable-next=ungrouped-imports
+    from importlib.machinery import SourceFileLoader
+except ImportError:  # PyPy3
+    from importlib._bootstrap import (  # type: ignore[no-redef]
+        _SourceFileLoader as SourceFileLoader,
+    )
+
 import yaml
 
 from .env import Environment
@@ -16,15 +24,9 @@ from .runners import Local
 from .terminals import WINDOWS
 from .util import debug
 
-try:
-    from importlib.machinery import SourceFileLoader
-except ImportError:  # PyPy3
-    from importlib._bootstrap import (
-        _SourceFileLoader as SourceFileLoader,  # type: ignore[no-redef]
-    )
 
-
-def load_source(name: str, path: str) -> Dict[str, Any]:
+def load_source(_: str, path: str) -> Dict[str, Any]:
+    # NOTE: "_" stub was "name" but is unused
     if not os.path.exists(path):
         return {}
     loader = SourceFileLoader("mod", path)
@@ -51,27 +53,18 @@ class DataProxy:
 
     # Attributes which get proxied through to inner merged-dict config obj.
     _proxies = (
-        tuple(
-            """
-        get
-        has_key
-        items
-        iteritems
-        iterkeys
-        itervalues
-        keys
-        values
-    """.split()
-        )
-        + tuple(
-            "__{}__".format(x)
-            for x in """
-        cmp
-        contains
-        iter
-        sizeof
-    """.split()
-        )
+        "get",
+        "has_key",
+        "items",
+        "iteritems",
+        "iterkeys",
+        "itervalues",
+        "keys",
+        "values",
+        "__cmp__",
+        "__contains__",
+        "__iter__",
+        "__sizeof__",
     )
 
     @classmethod
@@ -116,18 +109,16 @@ class DataProxy:
         # having a config key accidentally shadow a real attribute or method).
         try:
             return self._get(key)
-        except KeyError:
+        except KeyError as exc:
             # Proxy most special vars to config for dict procotol.
             if key in self._proxies:
                 return getattr(self._config, key)
             # Otherwise, raise useful AttributeError to follow getattr proto.
-            err = "No attribute or config key found for {!r}".format(key)
+            err = f"No attribute or config key found for {key!r}"
             attrs = [x for x in dir(self.__class__) if not x.startswith("_")]
-            err += "\n\nValid keys: {!r}".format(
-                sorted(list(self._config.keys()))
-            )
-            err += "\n\nValid real attributes: {!r}".format(attrs)
-            raise AttributeError(err)
+            err += f"\n\nValid keys: {sorted(list(self._config.keys()))!r}"
+            err += f"\n\nValid real attributes: {attrs!r}"
+            raise AttributeError(err) from exc
 
     def __setattr__(self, key: str, value: Any) -> None:
         # Turn attribute-sets into config updates anytime we don't have a real
@@ -206,7 +197,7 @@ class DataProxy:
             object.__setattr__(self, key, value)
 
     def __repr__(self) -> str:
-        return "<{}: {}>".format(self.__class__.__name__, self._config)
+        return f"<{self.__class__.__name__}: {self._config}>"
 
     def __contains__(self, key: str) -> bool:
         return key in self._config
@@ -623,7 +614,7 @@ class Config(DataProxy):
         env_prefix = self.env_prefix
         if env_prefix is None:
             env_prefix = self.prefix
-        env_prefix = "{}_".format(env_prefix.upper())
+        env_prefix = f"{env_prefix.upper()}_"
         self._set(_env_prefix=env_prefix)
         # Config data loaded from the shell environment.
         self._set(_env={})
@@ -852,9 +843,9 @@ class Config(DataProxy):
         self, prefix: str, absolute: bool = False, merge: bool = True
     ) -> None:
         # Setup
-        found = "_{}_found".format(prefix)
-        path = "_{}_path".format(prefix)
-        data = "_{}".format(prefix)
+        found = f"_{prefix}_found"
+        path = f"_{prefix}_path"
+        data = f"_{prefix}"
         midfix = self.file_prefix
         if midfix is None:
             midfix = self.prefix
@@ -869,7 +860,7 @@ class Config(DataProxy):
                 return
             paths = [absolute_path]
         else:
-            path_prefix = getattr(self, "_{}_prefix".format(prefix))
+            path_prefix = getattr(self, f"_{prefix}_prefix")
             # Short circuit if loading seems unnecessary (eg for project config
             # files when not running out of a project)
             if path_prefix is None:
@@ -885,12 +876,15 @@ class Config(DataProxy):
             try:
                 try:
                     type_ = splitext(filepath)[1].lstrip(".")
-                    loader = getattr(self, "_load_{}".format(type_))
-                except AttributeError:
-                    msg = "Config files of type {!r} (from file {!r}) are not supported! Please use one of: {!r}"  # noqa
+                    loader = getattr(self, f"_load_{type_}")
+                except AttributeError as exc:
+                    msg = (
+                        "Config files of type {!r} (from file {!r}) are not "
+                        + "supported! Please use one of: {!r}"
+                    )
                     raise UnknownFileType(
                         msg.format(type_, filepath, self._file_suffixes)
-                    )
+                    ) from exc
                 # Store data, the path it was found at, and fact that it was
                 # found
                 self._set(data, loader(filepath))
@@ -898,8 +892,8 @@ class Config(DataProxy):
                 self._set(found, True)
                 break
             # Typically means 'no such file', so just note & skip past.
-            except IOError as e:
-                if e.errno == 2:
+            except IOError as exc:
+                if exc.errno == 2:
                     debug("Didn't see any %r, skipping.", filepath)
                 else:
                     raise
@@ -911,13 +905,13 @@ class Config(DataProxy):
             self.merge()
 
     def _load_yaml(self, path: PathLike) -> Any:
-        with open(path) as fd:
+        with open(path, encoding="utf-8") as fd:
             return yaml.safe_load(fd)
 
     _load_yml = _load_yaml
 
     def _load_json(self, path: PathLike) -> Any:
-        with open(path) as fd:
+        with open(path, encoding="utf-8") as fd:
             return json.load(fd)
 
     def _load_py(self, path: str) -> Dict[str, Any]:
@@ -933,7 +927,11 @@ class Config(DataProxy):
             # probably doing something better done in runtime/library level
             # code and not in a "config file"...right?
             if isinstance(value, types.ModuleType):
-                err = "'{}' is a module, which can't be used as a config value. (Are you perhaps giving a tasks file instead of a config file by mistake?)"  # noqa
+                err = (
+                    "'{}' is a module, which can't be used as a config value. "
+                    + "(Are you perhaps giving a tasks file instead of a "
+                    + "config file by mistake?)"
+                )
                 raise UnpicklableConfigMember(err.format(key))
             data[key] = value
         return data
@@ -966,9 +964,9 @@ class Config(DataProxy):
     def _merge_file(self, name: str, desc: str) -> None:
         # Setup
         desc += " config file"  # yup
-        found = getattr(self, "_{}_found".format(name))
-        path = getattr(self, "_{}_path".format(name))
-        data = getattr(self, "_{}".format(name))
+        found = getattr(self, f"_{name}_found")
+        path = getattr(self, f"_{name}_path")
+        data = getattr(self, f"_{name}")
         # None -> no loading occurred yet
         if found is None:
             debug("%s has not been loaded yet, skipping", desc)
@@ -1029,29 +1027,29 @@ class Config(DataProxy):
         # NOTE: this will include lazy=True, see end of method
         new = klass(**self._clone_init_kwargs(into=into))
         # Copy/merge/etc all 'private' data sources and attributes
-        for name in """
-            collection
-            system_prefix
-            system_path
-            system_found
-            system
-            user_prefix
-            user_path
-            user_found
-            user
-            project_prefix
-            project_path
-            project_found
-            project
-            env_prefix
-            env
-            runtime_path
-            runtime_found
-            runtime
-            overrides
-            modifications
-        """.split():
-            name = "_{}".format(name)
+        for name in (
+            "collection",
+            "system_prefix",
+            "system_path",
+            "system_found",
+            "system",
+            "user_prefix",
+            "user_path",
+            "user_found",
+            "user",
+            "project_prefix",
+            "project_path",
+            "project_found",
+            "project",
+            "env_prefix",
+            "env",
+            "runtime_path",
+            "runtime_found",
+            "runtime",
+            "overrides",
+            "modifications",
+        ):
+            name = f"_{name}"
             my_data = getattr(self, name)
             # Non-dict data gets carried over straight (via a copy())
             # NOTE: presumably someone could really screw up and change these
@@ -1091,13 +1089,13 @@ class Config(DataProxy):
         if into is not None:
             merge_dicts(new_defaults, into.global_defaults())
         # The kwargs.
-        return dict(
-            defaults=new_defaults,
+        return {
+            "defaults": new_defaults,
             # TODO: consider making this 'hardcoded' on the calling end (ie
             # inside clone()) to make sure nobody accidentally nukes it via
             # subclassing?
-            lazy=True,
-        )
+            "lazy": True,
+        }
 
     def _modify(self, keypath: Tuple[str, ...], key: str, value: str) -> None:
         """
@@ -1204,7 +1202,7 @@ def merge_dicts(
                     raise _merge_error(base[key], value)
                 # Fileno-bearing objects are probably 'real' files which do not
                 # copy well & must be passed by reference. Meh.
-                elif hasattr(value, "fileno"):
+                if hasattr(value, "fileno"):
                     base[key] = value
                 else:
                     base[key] = copy.copy(value)
@@ -1233,7 +1231,7 @@ def _merge_error(orig: object, new: object) -> AmbiguousMergeError:
 
 
 def _format_mismatch(x: object) -> str:
-    return "{} ({!r})".format(type(x), x)
+    return f"{type(x)} ({x!r})"
 
 
 def copy_dict(source: Dict[str, Any]) -> Dict[str, Any]:

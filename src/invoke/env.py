@@ -114,13 +114,12 @@ class Environment:
     def _cast(self, old: Any, new: Any) -> Any:
         if isinstance(old, bool):
             return new not in ("0", "")
-        elif isinstance(old, str):
+        if isinstance(old, str):
             return new
-        elif old is None:
+        if old is None:
             return new
-        elif isinstance(old, (list, tuple)):
+        if isinstance(old, (list, tuple)):
             err = "Can't adapt an environment string into a {}!"
             err = err.format(type(old))
             raise UncastableEnvVar(err)
-        else:
-            return old.__class__(new)
+        return old.__class__(new)
