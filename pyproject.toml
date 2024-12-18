@@ -141,6 +141,7 @@ notes = []
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "*"
+addopts = "--log-disable='invoke.vendor.fluidstate'"
 # addopts = "--doctest-modules"
 
 [tool.coverage]
