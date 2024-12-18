@@ -4,13 +4,9 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional
 from lexicon import Lexicon
 
 try:
-    from ..vendor.fluidity import StateMachine, state, transition
+    from ..vendor.fluidstate import StateChart
 except ImportError:
-    from fluidity import (  # type: ignore[no-redef]
-        StateMachine,
-        state,
-        transition,
-    )
+    from fluidstate import StateChart  # type: ignore[no-redef]
 
 from ..exceptions import ParseError
 from ..util import debug
@@ -165,7 +161,7 @@ class Parser:
                     # core-args pass, handling what are going to be task args)
                     have_flag = (
                         token in machine.context.flags
-                        and machine.current_state != "unknown"
+                        and machine.state != "unknown"
                     )
                     if have_flag and machine.context.flags[token].takes_value:
                         debug(
@@ -215,29 +211,50 @@ class Parser:
         return result
 
 
-class ParseMachine(StateMachine):
-    initial_state = "context"
-
-    state("context", enter=["complete_flag", "complete_context"])
-    state("unknown", enter=["complete_flag", "complete_context"])
-    state("end", enter=["complete_flag", "complete_context"])
-
-    transition(from_=("context", "unknown"), event="finish", to="end")
-    transition(
-        from_="context",
-        event="see_context",
-        action="switch_to_context",
-        to="context",
-    )
-    transition(
-        from_=("context", "unknown"),
-        event="see_unknown",
-        action="store_only",
-        to="unknown",
-    )
-
-    def changing_state(self, from_: str, to: str) -> None:
-        debug("ParseMachine: %r => %r", from_, to)
+class ParseMachine(StateChart):
+    __statechart__ = {
+        "initial": "context",
+        "states": [
+            {
+                "name": "context",
+                "on_entry": ["complete_flag", "complete_context"],
+            },
+            {
+                "name": "unknown",
+                "on_entry": ["complete_flag", "complete_context"],
+            },
+            {
+                "name": "end",
+                "type": "final",
+                "on_entry": ["complete_flag", "complete_context"],
+            },
+        ],
+        "transitions": [
+            {
+                "event": "finish",
+                "target": "end",
+                "cond": (
+                    lambda ctx, *args, **kwargs: ctx.state
+                    in ("context", "unknown")
+                ),
+            },
+            {
+                "event": "see_context",
+                "target": "context",
+                "action": ["switch_to_context"],
+                "cond": lambda ctx, *args, **kwargs: ctx.state == "context",
+            },
+            {
+                "event": "see_unknown",
+                "target": "unknown",
+                "action": ["store_only"],
+                "cond": (
+                    lambda ctx, *args, **kwargs: ctx.state
+                    in ("context", "unknown")
+                ),
+            },
+        ],
+    }
 
     def __init__(
         self,
@@ -254,7 +271,7 @@ class ParseMachine(StateMachine):
         self.result = ParseResult()
         self.contexts = copy.deepcopy(contexts)
         debug("Available contexts: %r", self.contexts)
-        # In case StateMachine does anything in __init__
+        # In case StateChart does anything in __init__
         super().__init__()
 
     @property
@@ -286,7 +303,7 @@ class ParseMachine(StateMachine):
         debug("Handling token: %r", token)
         # Handle unknown state at the top: we don't care about even
         # possibly-valid input if we've encountered unknown input.
-        if self.current_state == "unknown":
+        if self.state == "unknown":
             debug("Top-of-handle() see_unknown(%r)", token)
             self.see_unknown(token)
             return
