@@ -941,7 +941,7 @@ class Program:
                 names=("print-completion-script",),
                 kind=str,
                 default="",
-                help="Print the tab-completion script for your preferred shell (bash|zsh|fish).",  # noqa
+                help="Print the tab-completion script for your preferred shell (sh|bash|zsh|fish).",  # noqa
             ),
             Argument(
                 names=("prompt-for-sudo-password",),
