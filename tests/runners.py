@@ -8,6 +8,7 @@ import threading
 import types
 from io import BytesIO, StringIO
 from itertools import chain, repeat
+from textwrap import dedent
 from unittest.mock import Mock, call, patch
 
 from _util import (
@@ -681,17 +682,20 @@ class Runner_:
                         exits=23, out=self._stdout, err=self._stderr
                     ).run(_)
                 except UnexpectedExit as e:
-                    expected = """Encountered a bad command exit code!
+                    expected = dedent(
+                        """\
+                        Encountered a bad command exit code!
 
-Command: '{}'
+                        Command: '{}'
 
-Exit code: 23
+                        Exit code: 23
 
-Stdout: already printed
+                        Stdout: already printed
 
-Stderr: already printed
+                        Stderr: already printed
 
-"""
+                        """
+                    )
                     assert str(e) == expected.format(_)
                 else:
                     assert False, "Failed to raise UnexpectedExit!"
@@ -703,17 +707,20 @@ Stderr: already printed
                         exits=13, out=self._stdout, err=self._stderr
                     ).run(_, pty=True)
                 except UnexpectedExit as e:
-                    expected = """Encountered a bad command exit code!
+                    expected = dedent(
+                        """\
+                        Encountered a bad command exit code!
 
-Command: '{}'
+                        Command: '{}'
 
-Exit code: 13
+                        Exit code: 13
 
-Stdout: already printed
+                        Stdout: already printed
 
-Stderr: n/a (PTYs have no stderr)
+                        Stderr: n/a (PTYs have no stderr)
 
-"""
+                        """
+                    )
                     assert str(e) == expected.format(_)
 
             @trap
@@ -738,39 +745,42 @@ Stderr: n/a (PTYs have no stderr)
                         exits=77, out=self._stdout, err=self._stderr
                     ).run(_, hide=True)
                 except UnexpectedExit as e:
-                    expected = """Encountered a bad command exit code!
+                    expected = dedent(
+                        """\
+                        Encountered a bad command exit code!
 
-Command: '{}'
+                        Command: '{}'
 
-Exit code: 77
+                        Exit code: 77
 
-Stdout:
+                        Stdout:
 
-stdout 16
-stdout 17
-stdout 18
-stdout 19
-stdout 20
-stdout 21
-stdout 22
-stdout 23
-stdout 24
-stdout 25
+                        stdout 16
+                        stdout 17
+                        stdout 18
+                        stdout 19
+                        stdout 20
+                        stdout 21
+                        stdout 22
+                        stdout 23
+                        stdout 24
+                        stdout 25
 
-Stderr:
+                        Stderr:
 
-stderr 16
-stderr 17
-stderr 18
-stderr 19
-stderr 20
-stderr 21
-stderr 22
-stderr 23
-stderr 24
-stderr 25
+                        stderr 16
+                        stderr 17
+                        stderr 18
+                        stderr 19
+                        stderr 20
+                        stderr 21
+                        stderr 22
+                        stderr 23
+                        stderr 24
+                        stderr 25
 
-"""
+                        """
+                    )
                     assert str(e) == expected.format(_)
 
             @trap
@@ -1371,16 +1381,18 @@ stderr 25
             assert info.value.timeout == 7
             _repr = "<CommandTimedOut: cmd='nope' timeout=7>"
             assert repr(info.value) == _repr
-            expected = """
-Command did not complete within 7 seconds!
+            expected = dedent(
+                """\
+                Command did not complete within 7 seconds!
 
-Command: 'nope'
+                Command: 'nope'
 
-Stdout: already printed
+                Stdout: already printed
 
-Stderr: already printed
+                Stderr: already printed
 
-""".lstrip()
+                """
+            )
             assert str(info.value) == expected
 
         @patch("invoke.runners.threading.Timer")
@@ -1763,34 +1775,40 @@ class Result_:
             self.sample = "\n".join(str(x) for x in range(25))
 
         def returns_last_10_lines_of_given_stream_plus_whitespace(self):
-            expected = """
+            expected = dedent(
+                """
 
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24"""
+                15
+                16
+                17
+                18
+                19
+                20
+                21
+                22
+                23
+                24"""
+            )
             assert Result(stdout=self.sample).tail("stdout") == expected
 
         def line_count_is_configurable(self):
-            expected = """
+            expected = dedent(
+                """
 
-23
-24"""
+                23
+                24"""
+            )
             tail = Result(stdout=self.sample).tail("stdout", count=2)
             assert tail == expected
 
         def works_for_stderr_too(self):
             # Dumb test is dumb, but whatever
-            expected = """
+            expected = dedent(
+                """
 
-23
-24"""
+                23
+                24"""
+            )
             tail = Result(stderr=self.sample).tail("stderr", count=2)
             assert tail == expected
 
