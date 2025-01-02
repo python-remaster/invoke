@@ -342,6 +342,8 @@ class Program:
             debug(
                 "Program was given default namespace, not loading collection"
             )
+            self.config.set_project_location(os.getcwd())
+            self.config.load_project()
             self.collection = self.namespace
         else:
             debug(
