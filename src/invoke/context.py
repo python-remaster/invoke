@@ -1,17 +1,11 @@
+from __future__ import annotations
+
 import os
 import re
 from contextlib import contextmanager
 from itertools import cycle
 from os import PathLike
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generator,
-    Iterator,
-    List,
-    Optional,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Generator, Iterator, Optional, Union
 from unittest.mock import Mock
 
 from .config import Config, DataProxy
@@ -64,12 +58,12 @@ class Context(DataProxy):
         #: A list of commands to run (via "&&") before the main argument to any
         #: `run` or `sudo` calls. Note that the primary API for manipulating
         #: this list is `prefix`; see its docs for details.
-        command_prefixes: List[str] = []
+        command_prefixes: list[str] = []
         self._set(command_prefixes=command_prefixes)
         #: A list of directories to 'cd' into before running commands with
         #: `run` or `sudo`; intended for management via `cd`, please see its
         #: docs for details.
-        command_cwds: List[str] = []
+        command_cwds: list[str] = []
         self._set(command_cwds=command_cwds)
 
     @property
@@ -107,7 +101,7 @@ class Context(DataProxy):
     # Fabric/etc, which needs to juggle multiple runner class types (local and
     # remote).
     def _run(
-        self, runner: "Runner", command: str, **kwargs: Any
+        self, runner: Runner, command: str, **kwargs: Any
     ) -> Optional[Result]:
         command = self._prefix_commands(command)
         return runner.run(command, **kwargs)
@@ -186,7 +180,7 @@ class Context(DataProxy):
 
     # NOTE: this is for runner injection; see NOTE above _run().
     def _sudo(
-        self, runner: "Runner", command: str, **kwargs: Any
+        self, runner: Runner, command: str, **kwargs: Any
     ) -> Optional[Result]:
         prompt = self.config.sudo.prompt
         password = kwargs.pop("password", self.config.sudo.password)

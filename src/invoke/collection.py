@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import copy
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 from lexicon import Lexicon
 
@@ -96,7 +98,7 @@ class Collection:
         self.collections = Lexicon()
         self.default: Optional[str] = None
         self.name = None
-        self._configuration: Dict[str, Any] = {}
+        self._configuration: dict[str, Any] = {}
         # Specific kwargs if applicable
         self.loaded_from = kwargs.pop("loaded_from", None)
         self.auto_dash_names = kwargs.pop("auto_dash_names", None)
@@ -148,7 +150,7 @@ class Collection:
         cls,
         module: ModuleType,
         name: Optional[str] = None,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
         loaded_from: Optional[str] = None,
         auto_dash_names: Optional[bool] = None,
     ) -> "Collection":
@@ -197,7 +199,7 @@ class Collection:
         """
         module_name = module.__name__.split(".")[-1]
 
-        def instantiate(obj_name: Optional[str] = None) -> "Collection":
+        def instantiate(obj_name: Optional[str] = None) -> Collection:
             # Explicitly given name wins over root ns name (if applicable),
             # which wins over actual module name.
             args = [name or obj_name or module_name]
@@ -239,9 +241,9 @@ class Collection:
 
     def add_task(
         self,
-        task: "Task",
+        task: Task,
         name: Optional[str] = None,
-        aliases: Optional[Tuple[str, ...]] = None,
+        aliases: Optional[tuple[str, ...]] = None,
         default: Optional[bool] = None,
     ) -> None:
         """
@@ -289,7 +291,7 @@ class Collection:
 
     def add_collection(
         self,
-        coll: Union["Collection", ModuleType],
+        coll: Union[Collection, ModuleType],
         name: Optional[str] = None,
         default: Optional[bool] = None,
     ) -> None:
@@ -335,7 +337,7 @@ class Collection:
             msg = "'{}' cannot be the default because '{}' already is!"
             raise ValueError(msg.format(name, self.default))
 
-    def _split_path(self, path: str) -> Tuple[str, str]:
+    def _split_path(self, path: str) -> tuple[str, str]:
         """
         Obtain first collection + remainder, of a task path.
 
@@ -350,7 +352,7 @@ class Collection:
         rest = ".".join(parts)
         return coll, rest
 
-    def subcollection_from_path(self, path: str) -> "Collection":
+    def subcollection_from_path(self, path: str) -> Collection:
         """
         Given a ``path`` to a subcollection, return that subcollection.
 
@@ -379,14 +381,14 @@ class Collection:
         return self.task_with_config(name)[0]
 
     def _task_with_merged_config(
-        self, coll: str, rest: str, ours: Dict[str, Any]
-    ) -> Tuple[str, Dict[str, Any]]:
+        self, coll: str, rest: str, ours: dict[str, Any]
+    ) -> tuple[str, dict[str, Any]]:
         task, config = self.collections[coll].task_with_config(rest)
         return task, dict(config, **ours)
 
     def task_with_config(
         self, name: Optional[str]
-    ) -> Tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """
         Return task named ``name`` plus its configuration dict.
 
@@ -429,7 +431,7 @@ class Collection:
 
     def to_contexts(
         self, ignore_unknown_help: Optional[bool] = None
-    ) -> List[ParserContext]:
+    ) -> list[ParserContext]:
         """
         Returns all contained tasks and subtasks as a list of parser contexts.
 
@@ -517,7 +519,7 @@ class Collection:
         return new
 
     @property
-    def task_names(self) -> Dict[str, List[str]]:
+    def task_names(self) -> dict[str, list[str]]:
         """
         Return all task identifiers for this collection as a one-level dict.
 
@@ -548,7 +550,7 @@ class Collection:
                 ret[self.subtask_name(coll_name, task_name)] = aliases
         return ret
 
-    def configuration(self, taskpath: Optional[str] = None) -> Dict[str, Any]:
+    def configuration(self, taskpath: Optional[str] = None) -> dict[str, Any]:
         """
         Obtain merged configuration values from collection & children.
 
@@ -566,7 +568,7 @@ class Collection:
             return copy_dict(self._configuration)
         return self.task_with_config(taskpath)[1]
 
-    def configure(self, options: Dict[str, Any]) -> None:
+    def configure(self, options: dict[str, Any]) -> None:
         """
         (Recursively) merge ``options`` into the current `.configuration`.
 
@@ -585,7 +587,7 @@ class Collection:
         """
         merge_dicts(self._configuration, options)
 
-    def serialized(self) -> Dict[str, Any]:
+    def serialized(self) -> dict[str, Any]:
         """
         Return an appropriate-for-serialization version of this object.
 

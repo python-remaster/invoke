@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional, Tuple
+from typing import Any, Iterable, Optional
 
 # TODO: dynamic type for kind
 # T = TypeVar('T')
@@ -108,7 +108,7 @@ class Argument:
         return self.attr_name or self.names[0]
 
     @property
-    def nicknames(self) -> Tuple[str, ...]:
+    def nicknames(self) -> tuple[str, ...]:
         return self.names[1:]
 
     @property

@@ -6,10 +6,12 @@ exceptions used for message-passing" to simply "we needed to express an error
 condition in a way easily told apart from other, truly unexpected errors".
 """
 
+from __future__ import annotations
+
 from pprint import pformat
 from textwrap import dedent
 from traceback import format_exception
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from .parser import ParserContext
@@ -49,12 +51,12 @@ class Failure(Exception):
     """
 
     def __init__(
-        self, result: "Result", reason: Optional["WatcherError"] = None
+        self, result: Result, reason: Optional[WatcherError] = None
     ) -> None:
         self.result = result
         self.reason = reason
 
-    def streams_for_display(self) -> Tuple[str, str]:
+    def streams_for_display(self) -> tuple[str, str]:
         """
         Return stdout/err streams as necessary for error display.
 
@@ -146,7 +148,7 @@ class CommandTimedOut(Failure):
     Raised when a subprocess did not exit within a desired timeframe.
     """
 
-    def __init__(self, result: "Result", timeout: int) -> None:
+    def __init__(self, result: Result, timeout: int) -> None:
         super().__init__(result)
         self.timeout = timeout
 
@@ -182,7 +184,7 @@ class AuthFailure(Failure):
     .. versionadded:: 1.0
     """
 
-    def __init__(self, result: "Result", prompt: str) -> None:
+    def __init__(self, result: Result, prompt: str) -> None:
         super().__init__(result)
         self.prompt = prompt
 
@@ -201,7 +203,7 @@ class ParseError(Exception):
     """
 
     def __init__(
-        self, msg: str, context: Optional["ParserContext"] = None
+        self, msg: str, context: Optional[ParserContext] = None
     ) -> None:
         super().__init__(msg)
         self.context = context
@@ -294,7 +296,7 @@ class UnpicklableConfigMember(Exception):
     """
 
 
-def _printable_kwargs(kwargs: Any) -> Dict[str, Any]:
+def _printable_kwargs(kwargs: Any) -> dict[str, Any]:
     """
     Return print-friendly version of a thread-related ``kwargs`` dict.
 
@@ -342,9 +344,9 @@ class ThreadException(Exception):
     #:     Thread kwargs which appear to be very long (e.g. IO
     #:     buffers) will be truncated when printed, to avoid huge
     #:     unreadable error display.
-    exceptions: Tuple["ExceptionWrapper", ...] = tuple()
+    exceptions: tuple[ExceptionWrapper, ...] = tuple()
 
-    def __init__(self, exceptions: List["ExceptionWrapper"]) -> None:
+    def __init__(self, exceptions: list[ExceptionWrapper]) -> None:
         self.exceptions = tuple(exceptions)
 
     def __str__(self) -> str:

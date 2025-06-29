@@ -3,6 +3,8 @@ This module contains the core `.Task` class & convenience decorators used to
 generate new tasks.
 """
 
+from __future__ import annotations
+
 import inspect
 import types
 from copy import deepcopy
@@ -11,13 +13,9 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Generic,
     Iterable,
-    List,
     Optional,
-    Set,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -67,9 +65,9 @@ class Task(Generic[T]):
         optional: Iterable[str] = (),
         default: bool = False,
         auto_shortflags: bool = True,
-        help: Optional[Dict[str, Any]] = None,
-        pre: Optional[Union[List[str], str]] = None,
-        post: Optional[Union[List[str], str]] = None,
+        help: Optional[dict[str, Any]] = None,
+        pre: Optional[Union[list[str], str]] = None,
+        post: Optional[Union[list[str], str]] = None,
         autoprint: bool = False,
         iterable: Optional[Iterable[str]] = None,
         incrementable: Optional[Iterable[str]] = None,
@@ -144,7 +142,7 @@ class Task(Generic[T]):
     def called(self) -> bool:
         return self.times_called > 0
 
-    def argspec(self, body: Callable) -> "Signature":
+    def argspec(self, body: Callable) -> Signature:
         """
         Returns a modified `inspect.Signature` based on that of ``body``.
 
@@ -189,9 +187,9 @@ class Task(Generic[T]):
         return positional
 
     def arg_opts(
-        self, name: str, default: str, taken_names: Set[str]
-    ) -> Dict[str, Any]:
-        opts: Dict[str, Any] = {}
+        self, name: str, default: str, taken_names: set[str]
+    ) -> dict[str, Any]:
+        opts: dict[str, Any] = {}
         # Whether it's positional or not
         opts["positional"] = name in self.positional
         # Whether it is a value-optional flag
@@ -239,7 +237,7 @@ class Task(Generic[T]):
 
     def get_arguments(
         self, ignore_unknown_help: Optional[bool] = None
-    ) -> List[Argument]:
+    ) -> list[Argument]:
         """
         Return a list of Argument objects representing this task's signature.
 
@@ -287,7 +285,7 @@ class Task(Generic[T]):
         return args
 
 
-def task(*args: Any, **kwargs: Any) -> "Task[T]":
+def task(*args: Any, **kwargs: Any) -> Task[T]:
     """
     Marks wrapped callable object as a valid Invoke task.
 
@@ -322,11 +320,11 @@ def task(*args: Any, **kwargs: Any) -> "Task[T]":
       given.)
     * ``auto_shortflags``: Whether or not to automatically create short
       flags from task options; defaults to True.
-    * ``help``: Dict mapping argument names to their help strings. Will be
+    * ``help``: dict mapping argument names to their help strings. Will be
       displayed in ``--help`` output. For arguments containing underscores
       (which are transformed into dashes on the CLI by default), either the
       dashed or underscored version may be supplied here.
-    * ``pre``, ``post``: Lists of task objects to execute prior to, or after,
+    * ``pre``, ``post``: lists of task objects to execute prior to, or after,
       the wrapped task whenever it is executed.
     * ``autoprint``: Boolean determining whether to automatically print this
       task's return value to standard output when invoked directly via the CLI.
@@ -374,10 +372,10 @@ class Call:
 
     def __init__(
         self,
-        task: "Task",
+        task: Task,
         called_as: Optional[str] = None,
-        args: Optional[Tuple[str, ...]] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        args: Optional[tuple[str, ...]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Create a new `.Call` object.
@@ -404,7 +402,7 @@ class Call:
     def __getattr__(self, name: str) -> Any:
         return getattr(self.task, name)
 
-    def __deepcopy__(self, memo: object) -> "Call":
+    def __deepcopy__(self, memo: object) -> Call:
         return self.clone()
 
     def __repr__(self) -> str:
@@ -429,7 +427,7 @@ class Call:
                 return False
         return True
 
-    def make_context(self, config: "Config") -> Context:
+    def make_context(self, config: Config) -> Context:
         """
         Generate a `.Context` appropriate for this call, with given config.
 
@@ -437,7 +435,7 @@ class Call:
         """
         return Context(config=config)
 
-    def clone_data(self) -> Dict[str, Any]:
+    def clone_data(self) -> dict[str, Any]:
         """
         Return keyword args suitable for cloning this call into another.
 
@@ -452,9 +450,9 @@ class Call:
 
     def clone(
         self,
-        into: Optional[Type["Call"]] = None,
-        with_: Optional[Dict[str, Any]] = None,
-    ) -> "Call":
+        into: Optional[Type[Call]] = None,
+        with_: Optional[dict[str, Any]] = None,
+    ) -> Call:
         """
         Return a standalone copy of this Call.
 
@@ -484,7 +482,7 @@ class Call:
         return klass(**data)
 
 
-def call(task: "Task", *args: Any, **kwargs: Any) -> "Call":
+def call(task: Task, *args: Any, **kwargs: Any) -> Call:
     """
     Describes execution of a `.Task`, typically with pre-supplied arguments.
 

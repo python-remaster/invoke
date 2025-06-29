@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import errno
 import locale
 import os
@@ -13,11 +15,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Generator,
-    List,
     Optional,
-    Tuple,
     Type,
     overload,
 )
@@ -71,18 +70,18 @@ class Runner:
     """
 
     encoding: str
-    env: Dict[str, Any]
-    opts: Dict[str, Any]
-    result_kwargs: Dict[str, Any]
+    env: dict[str, Any]
+    opts: dict[str, Any]
+    result_kwargs: dict[str, Any]
     using_pty: bool
-    threads: Dict[Callable, ExceptionHandlingThread]
-    stdout: List[str]
-    stderr: List[str]
-    streams: Dict[str, Any]
+    threads: dict[Callable, ExceptionHandlingThread]
+    stdout: list[str]
+    stderr: list[str]
+    streams: dict[str, Any]
     read_chunk_size: int = 1000
     input_sleep: float = 0.01
 
-    def __init__(self, context: "Context") -> None:
+    def __init__(self, context: Context) -> None:
         """
         Create a new runner with a handle on some `.Context`.
 
@@ -122,7 +121,7 @@ class Runner:
         self.warned_about_pty_fallback = False
         #: A list of `.StreamWatcher` instances for use by `respond`. Is filled
         #: in at runtime by `run`.
-        self.watchers: List["StreamWatcher"] = []
+        self.watchers: list["StreamWatcher"] = []
         # Optional timeout timer placeholder
         self._timer: Optional[threading.Timer] = None
         # Async flags (initialized for 'finally' referencing in case something
@@ -131,16 +130,16 @@ class Runner:
         self._disowned = False
 
     @overload
-    def run(self, command: str, *, disowned: None, **kwargs: Any) -> "Result":
+    def run(self, command: str, *, disowned: None, **kwargs: Any) -> Result:
         ...
 
     @overload
     def run(
         self, command: str, *, disowned: bool, **kwargs: Any
-    ) -> Optional["Result"]:
+    ) -> Optional[Result]:
         ...
 
-    def run(self, command: str, **kwargs: Any) -> Optional["Result"]:
+    def run(self, command: str, **kwargs: Any) -> Optional[Result]:
         """
         Execute ``command``, returning an instance of `Result` once complete.
 
@@ -446,7 +445,7 @@ class Runner:
             "encoding": self.encoding,
         }
 
-    def _run_body(self, command: str, **kwargs: Any) -> Optional["Result"]:
+    def _run_body(self, command: str, **kwargs: Any) -> Optional[Result]:
         # Prepare all the bits n bobs.
         self._setup(command, kwargs)
         # If dry-run, stop here.
@@ -468,7 +467,7 @@ class Runner:
         # Wrap up or promise that we will, depending
         return self.make_promise() if self._asynchronous else self._finish()
 
-    def make_promise(self) -> "Promise":
+    def make_promise(self) -> Promise:
         """
         Return a `Promise` allowing async control of the rest of lifecycle.
 
@@ -476,7 +475,7 @@ class Runner:
         """
         return Promise(self)
 
-    def _finish(self) -> "Result":
+    def _finish(self) -> Result:
         # Wait for subprocess to run, forwarding signals as we get them.
         try:
             while True:
@@ -598,7 +597,7 @@ class Runner:
         self.opts = opts
         self.streams = {"out": out_stream, "err": err_stream, "in": in_stream}
 
-    def _collate_result(self, watcher_errors: List[WatcherError]) -> "Result":
+    def _collate_result(self, watcher_errors: list[WatcherError]) -> Result:
         # At this point, we had enough success that we want to be returning or
         # raising detailed info about our execution; so we generate a Result.
         stdout = "".join(self.stdout)
@@ -644,17 +643,17 @@ class Runner:
 
     def create_io_threads(
         self,
-    ) -> Tuple[Dict[Callable, ExceptionHandlingThread], List[str], List[str]]:
+    ) -> tuple[dict[Callable, ExceptionHandlingThread], list[str], list[str]]:
         """
         Create and return a dictionary of IO thread worker objects.
 
         Caller is expected to handle persisting and/or starting the wrapped
         threads.
         """
-        stdout: List[str] = []
-        stderr: List[str] = []
+        stdout: list[str] = []
+        stderr: list[str] = []
         # Set up IO thread parameters (format - body_func: {kwargs})
-        thread_args: Dict[Callable, Any] = {
+        thread_args: dict[Callable, Any] = {
             self.handle_stdout: {
                 "buffer_": stdout,
                 "hide": "stdout" in self.opts["hide"],
@@ -684,7 +683,7 @@ class Runner:
             threads[target] = t
         return threads, stdout, stderr
 
-    def generate_result(self, **kwargs: Any) -> "Result":
+    def generate_result(self, **kwargs: Any) -> Result:
         """
         Create & return a suitable `Result` instance from the given ``kwargs``.
 
@@ -751,7 +750,7 @@ class Runner:
 
     def _handle_output(
         self,
-        buffer_: List[str],
+        buffer_: list[str],
         hide: bool,
         output: IO,
         reader: Callable,
@@ -774,7 +773,7 @@ class Runner:
             self.respond(buffer_)
 
     def handle_stdout(
-        self, buffer_: List[str], hide: bool, output: IO
+        self, buffer_: list[str], hide: bool, output: IO
     ) -> None:
         """
         Read process' stdout, storing into a buffer & printing/parsing.
@@ -797,7 +796,7 @@ class Runner:
         )
 
     def handle_stderr(
-        self, buffer_: List[str], hide: bool, output: IO
+        self, buffer_: list[str], hide: bool, output: IO
     ) -> None:
         """
         Read process' stderr, storing into a buffer & printing/parsing.
@@ -932,7 +931,7 @@ class Runner:
         """
         return (not self.using_pty) and isatty(input_)
 
-    def respond(self, buffer_: List[str]) -> None:
+    def respond(self, buffer_: list[str]) -> None:
         """
         Write to the program's stdin in response to patterns in ``buffer_``.
 
@@ -960,12 +959,12 @@ class Runner:
                 self.write_proc_stdin(response)
 
     def generate_env(
-        self, env: Dict[str, Any], replace_env: bool
-    ) -> Dict[str, Any]:
+        self, env: dict[str, Any], replace_env: bool
+    ) -> dict[str, Any]:
         """
         Return a suitable environment dict based on user input & behavior.
 
-        :param dict env: Dict supplying overrides or full env, depending.
+        :param dict env: dict supplying overrides or full env, depending.
         :param bool replace_env:
             Whether ``env`` updates, or is used in place of, the value of
             `os.environ`.
@@ -1065,7 +1064,7 @@ class Runner:
         """
         raise NotImplementedError
 
-    def start(self, command: str, shell: str, env: Dict[str, Any]) -> None:
+    def start(self, command: str, shell: str, env: dict[str, Any]) -> None:
         """
         Initiate execution of ``command`` (via ``shell``, with ``env``).
 
@@ -1158,7 +1157,7 @@ class Runner:
         return default_encoding()
 
     # pylint: disable-next=unused-argument
-    def send_interrupt(self, interrupt: "KeyboardInterrupt") -> None:
+    def send_interrupt(self, interrupt: KeyboardInterrupt) -> None:
         """
         Submit an interrupt signal to the running subprocess.
 
@@ -1246,9 +1245,9 @@ class Local(Runner):
 
     pid: int
     # parent_fd
-    process: "Popen"
+    process: Popen
 
-    def __init__(self, context: "Context") -> None:
+    def __init__(self, context: Context) -> None:
         super().__init__(context)
         # Bookkeeping var for pty use case
         self.status = 0
@@ -1334,7 +1333,7 @@ class Local(Runner):
                 "Unable to close missing subprocess or stdin!"
             )
 
-    def start(self, command: str, shell: str, env: Dict[str, Any]) -> None:
+    def start(self, command: str, shell: str, env: dict[str, Any]) -> None:
         if self.using_pty:
             if pty is None:  # Encountered ImportError
                 sys.exit(
@@ -1506,10 +1505,10 @@ class Result:
         encoding: Optional[str] = None,
         command: str = "",
         shell: str = "",
-        env: Optional[Dict[str, Any]] = None,
+        env: Optional[dict[str, Any]] = None,
         exited: int = 0,
         pty: bool = False,
-        hide: Tuple[str, ...] = tuple(),
+        hide: tuple[str, ...] = tuple(),
     ) -> None:
         self.stdout = stdout
         self.stderr = stderr
@@ -1611,7 +1610,7 @@ class Promise(Result):
     .. versionadded:: 1.4
     """
 
-    def __init__(self, runner: "Runner") -> None:
+    def __init__(self, runner: Runner) -> None:
         """
         Create a new promise.
 
@@ -1648,7 +1647,7 @@ class Promise(Result):
         finally:
             self.runner.stop()
 
-    def __enter__(self) -> "Promise":
+    def __enter__(self) -> Promise:
         return self
 
     def __exit__(
@@ -1664,7 +1663,7 @@ def normalize_hide(
     val: Any,
     out_stream: Optional[str] = None,
     err_stream: Optional[str] = None,
-) -> Tuple[str, ...]:
+) -> tuple[str, ...]:
     # Normalize to list-of-stream-names
     hide_vals = (None, False, "out", "stdout", "err", "stderr", "both", True)
     if val not in hide_vals:

@@ -7,9 +7,10 @@ situation requiring it) more convenient.
 This module is currently considered private/an implementation detail and should
 not be included in the Sphinx API documentation.
 """
+from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
 
 from .exceptions import AmbiguousEnvVar, UncastableEnvVar
 from .util import debug
@@ -19,12 +20,12 @@ if TYPE_CHECKING:
 
 
 class Environment:
-    def __init__(self, config: "Config", prefix: str) -> None:
+    def __init__(self, config: Config, prefix: str) -> None:
         self._config = config
         self._prefix = prefix
-        self.data: Dict[str, Any] = {}  # Accumulator
+        self.data: dict[str, Any] = {}  # Accumulator
 
-    def load(self) -> Dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         """
         Return a nested dict containing values from `os.environ`.
 
@@ -49,8 +50,8 @@ class Environment:
         return self.data
 
     def _crawl(
-        self, key_path: List[str], env_vars: Mapping[str, Sequence[str]]
-    ) -> Dict[str, Any]:
+        self, key_path: list[str], env_vars: Mapping[str, Sequence[str]]
+    ) -> dict[str, Any]:
         """
         Examine config at location ``key_path`` & return potential env vars.
 
@@ -64,7 +65,7 @@ class Environment:
 
         Returns another dictionary of new keypairs as per above.
         """
-        new_vars: Dict[str, List[str]] = {}
+        new_vars: dict[str, list[str]] = {}
         obj = self._path_get(key_path)
         # Sub-dict -> recurse
         if (
@@ -91,7 +92,7 @@ class Environment:
     def _to_env_var(self, key_path: Iterable[str]) -> str:
         return "_".join(key_path).upper()
 
-    def _path_get(self, key_path: Iterable[str]) -> "Config":
+    def _path_get(self, key_path: Iterable[str]) -> Config:
         # Gets are from self._config because that's what determines valid env
         # vars and/or values for typecasting.
         obj = self._config
