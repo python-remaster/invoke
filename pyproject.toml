@@ -12,7 +12,7 @@ authors = [
     {name="Jesse P Johnson", email="jpj6652@gmail.com"}
 ]
 maintainers = [{name="Jesse P Johnson", email="jpj6652@gmail.com"}]
-requires-python = ">=3.7.0"
+requires-python = ">=3.8"
 readme = "README.rst"
 license = {file = "LICENSE"}
 classifiers=[
