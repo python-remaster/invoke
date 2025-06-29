@@ -5,7 +5,7 @@ import re
 from contextlib import contextmanager
 from itertools import cycle
 from os import PathLike
-from typing import TYPE_CHECKING, Any, Generator, Iterator, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 from unittest.mock import Mock
 
 from .config import Config, DataProxy
@@ -14,6 +14,7 @@ from .runners import Result
 from .watchers import FailingResponder
 
 if TYPE_CHECKING:
+    from collections.abc import Generator, Iterator
     from invoke.runners import Runner
 
 

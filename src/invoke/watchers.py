@@ -1,6 +1,6 @@
 import re
 import threading
-from typing import Generator, Iterable
+from collections.abc import Generator, Iterable
 
 from .exceptions import ResponseNotAccepted
 

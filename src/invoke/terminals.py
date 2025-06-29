@@ -10,8 +10,9 @@ logic-flow interruptions.
 import os
 import select
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import IO, Generator, Optional
+from typing import IO, Optional
 
 # TODO: move in here? They're currently platform-agnostic...
 from .util import has_fileno, isatty

@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 
 # TODO: dynamic type for kind
 # T = TypeVar('T')

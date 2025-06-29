@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import inspect
 import types
+from collections.abc import Iterable
 from copy import deepcopy
 from functools import update_wrapper
 from typing import (
@@ -14,7 +15,6 @@ from typing import (
     Any,
     Callable,
     Generic,
-    Iterable,
     Optional,
     Type,
     TypeVar,

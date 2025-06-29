@@ -4,11 +4,12 @@ import copy
 import json
 import os
 import types
+from collections.abc import Iterator
 from importlib.util import spec_from_loader
 from os import PathLike
 from os.path import expanduser, join, splitext
 from types import ModuleType
-from typing import Any, Iterator, Optional, Type, Union
+from typing import Any, Optional, Type, Union
 
 try:
     # pylint: disable-next=ungrouped-imports

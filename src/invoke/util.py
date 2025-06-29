@@ -5,10 +5,11 @@ import logging
 import os
 import sys
 from collections import namedtuple
+from collections.abc import Generator
 from contextlib import contextmanager
 from threading import Thread
 from types import TracebackType
-from typing import IO, Any, Generator, Optional, Type, Union
+from typing import IO, Any, Optional, Type, Union
 
 # NOTE: This is the canonical location for commonly-used vendored modules,
 # which is the only spot that performs this try/except to allow repackaged

@@ -1,5 +1,6 @@
 import itertools
-from typing import Any, Iterable, Optional, Union
+from collections.abc import Iterable
+from typing import Any, Optional, Union
 
 from lexicon import Lexicon
 

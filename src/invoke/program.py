@@ -7,7 +7,7 @@ import os
 import sys
 import textwrap
 from importlib import import_module
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Type
+from typing import TYPE_CHECKING, Any, Optional, Type
 
 from . import Collection, Config, Executor, FilesystemLoader
 from .completion.complete import complete, print_completion_script
@@ -17,6 +17,7 @@ from .terminals import pty_size
 from .util import debug, enable_logging, helpline
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from lexicon import Lexicon
     from .loader import Loader
     from .parser import ParseResult

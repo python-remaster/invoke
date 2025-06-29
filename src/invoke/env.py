@@ -10,12 +10,13 @@ not be included in the Sphinx API documentation.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any
 
 from .exceptions import AmbiguousEnvVar, UncastableEnvVar
 from .util import debug
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping, Sequence
     from .config import Config
 
 
