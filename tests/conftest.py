@@ -10,6 +10,8 @@ from _util import support
 # Set up icecream globally for convenience.
 from icecream import install
 
+from invoke import Context
+
 install()
 
 
@@ -21,6 +23,17 @@ install()
 # TODO: see if we can use modern pytest's logging functionality to remove the
 # need for this, now that pytest-relaxed was modernized
 logging.basicConfig(level=logging.INFO)
+
+
+@pytest.fixture
+def local_path():
+    with patch("invoke.config.Local") as p:
+        yield p
+
+
+@pytest.fixture
+def ctx():
+    return Context()
 
 
 @pytest.fixture(autouse=True)
