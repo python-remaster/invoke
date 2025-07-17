@@ -8,7 +8,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 from threading import Thread
 from types import TracebackType
-from typing import IO, TYPE_CHECKING, Any, Optional, Type, Union
+from typing import IO, TYPE_CHECKING, Any, Optional, Union
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -176,9 +176,10 @@ class ExceptionHandlingThread(Thread):
         self.kwargs = kwargs
         # TODO: legacy cruft that needs to be removed
         self.exc_info: Optional[
-            Union[
-                tuple[Type[BaseException], BaseException, TracebackType],
-                tuple[None, None, None],
+            tuple[
+                Optional[type[BaseException]],
+                Optional[BaseException],
+                Optional[TracebackType],
             ]
         ] = None
 

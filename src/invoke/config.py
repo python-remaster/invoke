@@ -8,7 +8,7 @@ from importlib.util import spec_from_loader
 from os import PathLike
 from os.path import expanduser, join, splitext
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 try:
     # pylint: disable-next=ungrouped-imports
@@ -983,7 +983,7 @@ class Config(DataProxy):
             # the negative? Just a branch here based on 'name'?
             debug("%s not found, skipping", desc)
 
-    def clone(self, into: Optional[Type[Config]] = None) -> Config:
+    def clone(self, into: Optional[type[Config]] = None) -> Config:
         """
         Return a copy of this configuration object.
 
@@ -1072,7 +1072,7 @@ class Config(DataProxy):
         return new
 
     def _clone_init_kwargs(
-        self, into: Optional[Type["Config"]] = None
+        self, into: Optional[type["Config"]] = None
     ) -> dict:
         """
         Supply kwargs suitable for initializing a new clone of this object.
