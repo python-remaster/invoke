@@ -7,7 +7,7 @@ import os
 import sys
 import textwrap
 from importlib import import_module
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional
 
 from . import Collection, Config, Executor, FilesystemLoader
 from .completion.complete import complete, print_completion_script
@@ -63,9 +63,9 @@ class Program:
         namespace: Optional[Collection] = None,
         name: Optional[str] = None,
         binary: Optional[str] = None,
-        loader_class: Optional[Type[Loader]] = None,
-        executor_class: Optional[Type[Executor]] = None,
-        config_class: Optional[Type[Config]] = None,
+        loader_class: Optional[type[Loader]] = None,
+        executor_class: Optional[type[Executor]] = None,
+        config_class: Optional[type[Config]] = None,
         binary_names: Optional[list[str]] = None,
     ) -> None:
         """
@@ -610,7 +610,7 @@ class Program:
             ) from exc
 
     def _update_core_context(
-        self, context: ParserContext, new_args: dict
+        self, context: ParserContext, new_args: dict[str, Any]
     ) -> None:
         # Update core context w/ core_via_task args, if and only if the
         # via-task version of the arg was truly given a value.

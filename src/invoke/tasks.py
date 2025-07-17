@@ -15,7 +15,6 @@ from typing import (
     Any,
     # Generic,
     Optional,
-    Type,
     # TypeVar,
     Union,
     cast,
@@ -265,7 +264,9 @@ class Task:
             ]
         return positional
 
-    def arg_opts(self, name: str, default: str, taken_names: set[str]) -> dict:
+    def arg_opts(
+        self, name: str, default: str, taken_names: set[str]
+    ) -> dict[str, Any]:
         opts: dict = {}
         # Whether it's positional or not
         opts["positional"] = name in self.positional
@@ -384,7 +385,7 @@ class Call:
         /,
         called_as: Optional[str] = None,
         args: Optional[tuple[str, ...]] = None,
-        kwargs: Optional[dict] = None,
+        kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Create a new `.Call` object.
@@ -450,8 +451,8 @@ class Call:
 
     def clone(
         self,
-        into: Optional[Type[Call]] = None,
-        with_: Optional[dict] = None,
+        into: Optional[type[Call]] = None,
+        with_: Optional[dict[str, Any]] = None,
     ) -> "Call":
         """
         Return a standalone copy of this Call.

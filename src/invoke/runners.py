@@ -10,14 +10,7 @@ import threading
 import time
 from subprocess import PIPE, Popen
 from types import TracebackType
-from typing import (
-    IO,
-    TYPE_CHECKING,
-    Any,
-    Optional,
-    Type,
-    overload,
-)
+from typing import IO, TYPE_CHECKING, Any, Optional, overload
 
 # Import some platform-specific things at top level so they can be mocked for
 # tests.
@@ -1651,8 +1644,8 @@ class Promise(Result):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: BaseException,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
         self.join()
