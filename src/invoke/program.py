@@ -18,7 +18,9 @@ from .util import debug, enable_logging, helpline
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
     from lexicon import Lexicon
+
     from .loader import Loader
     from .parser import ParseResult
 

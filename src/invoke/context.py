@@ -77,13 +77,10 @@ class Context(DataProxy):
 
     def __getattr__(self, name: str) -> Any:
         # do not attempt to resolve missing dunders
-        if name.startswith('__'):
+        if name.startswith("__"):
             raise AttributeError
         # look for sibling task within namespace
-        if (
-            self.namespace
-            and name in self.namespace.tasks
-        ):
+        if self.namespace and name in self.namespace.tasks:
             tasks = [v for k, v in self.namespace.tasks.items() if k == name]
             if len(tasks) == 1:
                 return partial(tasks[0], self)
@@ -117,9 +114,9 @@ class Context(DataProxy):
     def get_context(self, namespace: str) -> Iterator[Context]:
         if self.namespace:
             yield (
-                self.namespace
-                .get_collection(namespace)
-                .make_context(self.config)
+                self.namespace.get_collection(namespace).make_context(
+                    self.config
+                )
             )
         else:
             raise AttributeError(f"unable to locate {namespace!r} namespace")
@@ -411,7 +408,7 @@ class Context(DataProxy):
         Finally, a demonstration (see inline comments) of nesting::
 
             with c.cd('/var/www'):
-                c.run('ls') # cd /var/www && ls
+                c.run('ls')  # cd /var/www && ls
                 with c.cd('website1'):
                     c.run('ls')  # cd /var/www/website1 && ls
 

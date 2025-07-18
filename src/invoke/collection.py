@@ -225,8 +225,8 @@ class Collection:
             # which wins over actual module name.
             args = [name or obj_name or module_name]
             kwargs = {
-                'loaded_from': loaded_from,
-                'auto_dash_names': auto_dash_names,
+                "loaded_from": loaded_from,
+                "auto_dash_names": auto_dash_names,
             }
             instance = cls(*args, **kwargs)
             instance.__doc__ = module.__doc__
@@ -409,7 +409,7 @@ class Collection:
         if path != ".":  # self is already there
             target_subpaths = path.split(".")
             if path.startswith("."):  # path is relative
-                s = 2 if path.endswith('.') else 1
+                s = 2 if path.endswith(".") else 1
                 target_subpaths = target_subpaths[s:]
                 while target_subpaths and target_subpaths[0] == "":
                     if current.parent is not None:
@@ -426,7 +426,9 @@ class Collection:
                     if x[0] != x[1]:
                         # paths are unrelated
                         if i == 0:
-                            raise Exception("no relative path exists between namespaces")
+                            raise Exception(
+                                "no relative path exists between namespaces"
+                            )
                         break
                     else:
                         # traverse matches
@@ -439,7 +441,9 @@ class Collection:
                             current = current.parent
                             source_subpaths = source_subpaths[1:]
                         else:
-                            raise Exception("no relative path exists between namespaces")
+                            raise Exception(
+                                "no relative path exists between namespaces"
+                            )
             # if target_subpaths exist then target is descendent of current
             for subpath in target_subpaths:
                 if subpath in current.collections.keys():

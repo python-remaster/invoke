@@ -1,6 +1,6 @@
 "PyPI/etc distribution artifacts."
 
-from invoke import task, Collection
+from invoke import Collection, task
 
 
 @task(name="all", default=True)

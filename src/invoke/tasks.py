@@ -10,12 +10,10 @@ from collections.abc import Callable, Iterable
 from copy import deepcopy
 from functools import singledispatchmethod, update_wrapper
 from types import FunctionType
-from typing import (
+from typing import (  # Generic,; TypeVar,
     TYPE_CHECKING,
     Any,
-    # Generic,
     Optional,
-    # TypeVar,
     Union,
     cast,
 )
@@ -26,8 +24,8 @@ from .parser import Argument, translate_underscores
 if TYPE_CHECKING:
     from inspect import Signature
 
-    from .config import Config
     from .collection import Collection
+    from .config import Config
 
 # T = TypeVar("T", bound="Callable")
 
@@ -129,14 +127,14 @@ class Task:
 
         # Default name, alternate names, and whether it should act as the
         # default for its parent collection
-        self._name: str = kwargs.pop('name', None)
-        self.aliases: tuple[str, ...] = tuple(kwargs.pop('aliases', ()))
-        self.is_default: bool = bool(kwargs.pop('default', False))
-        self.optional: tuple[str, ...] = tuple(kwargs.pop('optional', ()))
-        self.iterable: Iterable[str] = kwargs.pop('iterable', [])
-        self.incrementable: Iterable[str] = kwargs.pop('incrementable', [])
-        self.auto_shortflags: bool = bool(kwargs.pop('auto_shortflags', True))
-        self.help: dict[str, Any] = (kwargs.pop('help', {})).copy()
+        self._name: str = kwargs.pop("name", None)
+        self.aliases: tuple[str, ...] = tuple(kwargs.pop("aliases", ()))
+        self.is_default: bool = bool(kwargs.pop("default", False))
+        self.optional: tuple[str, ...] = tuple(kwargs.pop("optional", ()))
+        self.iterable: Iterable[str] = kwargs.pop("iterable", [])
+        self.incrementable: Iterable[str] = kwargs.pop("incrementable", [])
+        self.auto_shortflags: bool = bool(kwargs.pop("auto_shortflags", True))
+        self.help: dict[str, Any] = (kwargs.pop("help", {})).copy()
         # Call chain bidness
         if args:
             if "pre" in kwargs:
@@ -144,17 +142,17 @@ class Task:
                     "May not give *args and 'pre' kwarg simultaneously!"
                 )
             kwargs["pre"] = args
-        self.pre: list[Union[Call, Task]] = kwargs.pop('pre', [])
-        self.post: list[Union[Call, Task]] = kwargs.pop('post', [])
+        self.pre: list[Union[Call, Task]] = kwargs.pop("pre", [])
+        self.post: list[Union[Call, Task]] = kwargs.pop("post", [])
         # Whether to print return value post-execution
-        self.autoprint: bool = bool(kwargs.pop('autoprint', False))
+        self.autoprint: bool = bool(kwargs.pop("autoprint", False))
         # Arg/flag/parser hints
         self.positional = (
-            self.fill_implicit_positionals(kwargs.pop('positional', None))
+            self.fill_implicit_positionals(kwargs.pop("positional", None))
             if self.body is not None
-            else kwargs.pop('positional', None)
+            else kwargs.pop("positional", None)
         )
-        kwargs.pop('klass', None)  # XXX move to metaclass
+        kwargs.pop("klass", None)  # XXX move to metaclass
         if kwargs != {}:
             raise TypeError
         self.times_called = 0

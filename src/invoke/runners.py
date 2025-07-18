@@ -46,6 +46,7 @@ from .util import ExceptionHandlingThread, has_fileno, isatty
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
+
     from .context import Context
     from .watchers import StreamWatcher
 
@@ -635,9 +636,7 @@ class Runner:
 
     def create_io_threads(
         self,
-    ) -> tuple[
-        dict[Callable, ExceptionHandlingThread], list[str], list[str]
-    ]:
+    ) -> tuple[dict[Callable, ExceptionHandlingThread], list[str], list[str]]:
         """
         Create and return a dictionary of IO thread worker objects.
 

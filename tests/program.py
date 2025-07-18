@@ -7,6 +7,16 @@ from textwrap import dedent
 from unittest.mock import ANY, Mock, patch
 
 import pytest
+from _util import (
+    ROOT,
+    expect,
+    load,
+    run,
+    skip_if_windows,
+    support,
+    support_file,
+    support_path,
+)
 from lexicon import Lexicon
 from pytest import skip
 from pytest_relaxed import trap
@@ -28,17 +38,6 @@ from invoke import (
 )
 from invoke.config import merge_dicts
 from invoke.util import cd
-
-from _util import (
-    ROOT,
-    expect,
-    load,
-    run,
-    skip_if_windows,
-    support,
-    support_file,
-    support_path,
-)
 
 pytestmark = pytest.mark.usefixtures("integration")
 

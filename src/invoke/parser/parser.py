@@ -13,6 +13,7 @@ from ..util import debug
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
     from .context import ParserContext
 
 

@@ -1,6 +1,6 @@
 "Tasks for compiling static code and assets."
 
-from invoke import task, Collection
+from invoke import Collection, task
 
 from . import docs, python
 
