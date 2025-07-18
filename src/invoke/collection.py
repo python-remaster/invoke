@@ -29,7 +29,7 @@ class Collection:
     """
 
     def __init__(
-        self, *args: Union[str, Collection, Task], **kwargs: Any
+        self, *args: Union[Collection, Task, str], **kwargs: Any
     ) -> None:
         """
         Create a new task collection/namespace.
@@ -155,12 +155,9 @@ class Collection:
 
     def __reversed__(self) -> Iterator[Collection]:
         target: Collection = self
-        while target:
+        while target is not None:
             yield target
-            if target.parent:
-                target = target.parent
-            else:
-                raise StopIteration
+            target = target.parent
 
     def __repr__(self) -> str:
         task_names = list(self.tasks.keys())
@@ -409,26 +406,27 @@ class Collection:
     def get_collection(self, path: str = ".") -> Collection:
         """Get collection."""
         current: Collection = self
-        if path != '.':  # self is already there
-            target_subpaths = path.split('.')
-            if path.startswith('.'):  # path is relative
-                target_subpaths = target_subpaths[1:]
-                while target_subpaths and target_subpaths[0] == '':
+        if path != ".":  # self is already there
+            target_subpaths = path.split(".")
+            if path.startswith("."):  # path is relative
+                s = 2 if path.endswith('.') else 1
+                target_subpaths = target_subpaths[s:]
+                while target_subpaths and target_subpaths[0] == "":
                     if current.parent is not None:
                         current = current.parent
                         target_subpaths = target_subpaths[1:]
                     else:
-                        raise Exception('namespace parent depth exceeded')
+                        raise Exception("namespace parent depth exceeded")
             else:  # path is absolute
-                source_subpaths = self.path.split('.')
+                source_subpaths = self.path.split(".")
                 for i, x in enumerate(
-                    zip_longest(source_subpaths, target_subpaths, fillvalue='')
+                    zip_longest(source_subpaths, target_subpaths, fillvalue="")
                 ):
                     # check when paths diverge
                     if x[0] != x[1]:
                         # paths are unrelated
                         if i == 0:
-                            raise Exception('no relative path exists between namespaces')
+                            raise Exception("no relative path exists between namespaces")
                         break
                     else:
                         # traverse matches
@@ -441,13 +439,13 @@ class Collection:
                             current = current.parent
                             source_subpaths = source_subpaths[1:]
                         else:
-                            raise Exception('no relative path exists between namespaces')
+                            raise Exception("no relative path exists between namespaces")
             # if target_subpaths exist then target is descendent of current
             for subpath in target_subpaths:
                 if subpath in current.collections.keys():
                     current = current.collections[subpath]
                 else:
-                    raise Exception('child collection does not exist')
+                    raise Exception("child collection does not exist")
         return current
 
     def make_context(self, config: Config) -> Context:
