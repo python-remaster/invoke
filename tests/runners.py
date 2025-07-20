@@ -39,7 +39,7 @@ from invoke import (
     UnexpectedExit,
     WatcherError,
 )
-from invoke.runners import default_encoding
+from invoke.util import default_encoding
 from invoke.terminals import WINDOWS
 
 
@@ -402,13 +402,13 @@ class Runner_:
             # Actually testing this highly OS/env specific stuff is very
             # error-prone; so we degrade to just testing expected function
             # calls for now :(
-            with patch("invoke.runners.locale") as fake_locale:
+            with patch("invoke.util.locale") as fake_locale:
                 fake_locale.getdefaultlocale.return_value = ("meh", "UHF-8")
                 fake_locale.getpreferredencoding.return_value = "FALLBACK"
                 assert self._runner().default_encoding() == "FALLBACK"
 
         def falls_back_to_defaultlocale_when_preferredencoding_is_None(self):
-            with patch("invoke.runners.locale") as fake_locale:
+            with patch("invoke.util.locale") as fake_locale:
                 fake_locale.getdefaultlocale.return_value = (None, None)
                 fake_locale.getpreferredencoding.return_value = "FALLBACK"
                 assert self._runner().default_encoding() == "FALLBACK"

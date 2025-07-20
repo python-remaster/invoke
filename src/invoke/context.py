@@ -11,7 +11,7 @@ from unittest.mock import Mock
 
 from .config import Config, DataProxy
 from .exceptions import AuthFailure, Failure, ResponseNotAccepted
-from .runners import Result
+from .results import Result
 from .watchers import FailingResponder
 
 if TYPE_CHECKING:

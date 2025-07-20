@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import locale
 import logging
 import os
 import sys
@@ -38,6 +39,45 @@ if os.environ.get("INVOKE_DEBUG"):
 # Add top level logger functions to global namespace. Meh.
 log = logging.getLogger("invoke")
 debug = log.debug
+
+
+def normalize_hide(
+    val: Any,
+    out_stream: Optional[str] = None,
+    err_stream: Optional[str] = None,
+) -> tuple[str, ...]:
+    # Normalize to list-of-stream-names
+    hide_vals = (None, False, "out", "stdout", "err", "stderr", "both", True)
+    if val not in hide_vals:
+        err = "'hide' got {!r} which is not in {!r}"
+        raise ValueError(err.format(val, hide_vals))
+    if val in (None, False):
+        hide = []
+    elif val in ("both", True):
+        hide = ["stdout", "stderr"]
+    elif val == "out":
+        hide = ["stdout"]
+    elif val == "err":
+        hide = ["stderr"]
+    else:
+        hide = [val]
+    # Revert any streams that have been overridden from the default value
+    if out_stream is not None and "stdout" in hide:
+        hide.remove("stdout")
+    if err_stream is not None and "stderr" in hide:
+        hide.remove("stderr")
+    return tuple(hide)
+
+
+def default_encoding() -> str:
+    """
+    Obtain apparent interpreter-local default text encoding.
+
+    Often used as a baseline in situations where we must use SOME encoding for
+    unknown-but-presumably-text bytes, and the user has not specified an
+    override.
+    """
+    return locale.getpreferredencoding(False)
 
 
 def task_name_sort_key(name: str) -> tuple[list[str], str]:
